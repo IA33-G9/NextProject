@@ -1,13 +1,26 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/generated/prisma/client';
 
 const prisma = new PrismaClient();
 
 export async function GET() {
   try {
     const screens = await prisma.screen.findMany({
-      include: {
-        cinema: true,
+      select: {
+        id: true,
+        number: true,
+        size: true,
+        rows: true,
+        columns: true,
+        capacity: true,
+        cinemaId: true,
+        cinema: {
+          select: {
+            id: true,
+            name: true,
+            location: true,
+          },
+        },
       },
     });
 
