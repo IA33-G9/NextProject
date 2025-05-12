@@ -3,22 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ScreenSize } from '@/generated/prisma/client';
 import SeatLayout from '@/app/_components/SeatLayout/SeatLayout';
+import  { Screen } from '@/type/screen/screen';
 
-// スクリーン型定義
-type Screen = {
-  id: string;
-  number: string;
-  size: ScreenSize;
-  rows: number;
-  columns: number;
-  capacity: number;
-  cinema: {
-    id: string;
-    name: string;
-  };
-};
 
 // スクリーンサイズの日本語表示
 const screenSizeLabel = {

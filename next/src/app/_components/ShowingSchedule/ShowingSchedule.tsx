@@ -4,19 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { format, isSameDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
+import { Screen} from '@/type/screen/screen';
+import  { Cinema } from '@/type/cinema/cinema';
 
-type Cinema = {
-  id: string;
-  name: string;
-  location: string;
-};
-
-type Screen = {
-  id: string;
-  number: string;
-  size: 'LARGE' | 'MEDIUM' | 'SMALL';
-  cinema: Cinema;
-};
 
 type Showing = {
   id: string;
