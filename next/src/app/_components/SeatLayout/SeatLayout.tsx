@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ScreenSize } from '../../../generated/prisma/client';
+import { ScreenSize } from '@/generated/prisma/client';
 
 // 座席タイプの定義
 type Seat = {

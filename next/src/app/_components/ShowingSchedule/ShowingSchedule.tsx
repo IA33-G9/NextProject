@@ -99,7 +99,7 @@ export default function ShowingSchedule({ showings }: ShowingScheduleProps) {
                     .map(showing => (
                       <Link
                         key={showing.id}
-                        href={`/booking/new?showingId=${showing.id}`}
+                        href={`/booking/${showing.id}`}
                         className="block bg-gray-50 rounded-lg p-4 border border-gray-200 hover:bg-gray-100 transition-colors"
                       >
                         <div className="flex justify-between mb-2">

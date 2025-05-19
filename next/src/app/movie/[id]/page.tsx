@@ -8,14 +8,15 @@ import Image from 'next/image';
 import ShowingSchedule from '@/app/_components/ShowingSchedule/ShowingSchedule';
 import { Movie } from '@/type/movie/movie';
 
-
-
 export default function MovieDetailPage({
   params: paramsPromise
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const params = use(paramsPromise); // ← ここで unwrap
+  // React.use()を使ってparamsを解決する
+  const params = use(paramsPromise);
+  const movieId = params.id;
+
   const [movie, setMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +26,7 @@ export default function MovieDetailPage({
     const fetchMovie = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/movies/${params.id}`, {
+        const response = await fetch(`/api/movies/${movieId}`, {
           cache: 'no-store'
         });
 
@@ -38,6 +39,7 @@ export default function MovieDetailPage({
         }
 
         const data = await response.json();
+        console.log('Fetched movie data:', data); // デバッグ用
         setMovie(data);
         setLoading(false);
       } catch (err) {
@@ -48,11 +50,14 @@ export default function MovieDetailPage({
     };
 
     fetchMovie();
-  }, [params.id, router]);
+  }, [movieId, router]);
 
   if (loading) return <div>読み込み中...</div>;
   if (error) return <div>{error}</div>;
   if (!movie) return <div>映画情報が見つかりません</div>;
+  const message = movie.showings.length;
+  // showingsがあるかチェック（undefined、null、空配列の場合に対応）
+  const hasShowings = movie.showings && movie.showings.length > 0;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -123,7 +128,7 @@ export default function MovieDetailPage({
         </div>
       </div>
 
-      {movie.showings.length > 0 ? (
+      {hasShowings ? (
         <div className="mt-10">
           <h2 className="text-2xl font-bold mb-6">上映スケジュール</h2>
           <ShowingSchedule showings={movie.showings} />
@@ -131,6 +136,8 @@ export default function MovieDetailPage({
       ) : (
         <div className="mt-10 bg-yellow-50 border border-yellow-200 rounded-md p-4">
           <p className="text-yellow-700">現在この映画の上映予定はありません。</p>
+
+          <p className="text-yellow-700">{message}</p>
         </div>
       )}
     </div>

@@ -1,4 +1,4 @@
-//すべての座席を表示するapi
+//指定したz席の情報を取得するapi
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/generated/prisma/client';
 
@@ -11,23 +11,13 @@ export async function GET(
   const {id} = await params;
 
   try {
-    // 指定したスクリーンの座席を取得
-    const seats = await prisma.seat.findMany({
-      where: { screenId: id },
-      select: {
-        id: true,
-        row: true,
-        column: true,
-        isActive: true,
-        screenId: true,
-      },
-        orderBy: [
-          {row: 'asc'},
-          {column: 'asc'},
-        ],
-    });
+        const seat = await prisma.seat.findUnique({
+          where: { id: id },
+          select: { row: true, column: true },
+        });
 
-    return NextResponse.json(seats);
+
+    return NextResponse.json(seat);
   } catch (error) {
     console.error('座席一覧取得エラー:', error);
     return NextResponse.json(

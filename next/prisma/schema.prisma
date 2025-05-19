@@ -127,19 +127,20 @@ enum PaymentMethod {
 }
 
 model Booking {
-  id          String        @id @default(cuid())
-  bookingDate DateTime      @default(now())
-  totalPrice  Int
-  status      BookingStatus @default(PENDING)
-  paymentMethod PaymentMethod?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id              String        @id @default(cuid())
+  bookingDate     DateTime      @default(now())
+  totalPrice      Int
+  status          BookingStatus @default(PENDING)
+  bookingReference String       @unique
+  paymentMethod   PaymentMethod?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
-  userId      String
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  showingId   String
-  showing     Showing       @relation(fields: [showingId], references: [id], onDelete: Cascade)
-  seats       BookingSeat[]
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  showingId       String
+  showing         Showing       @relation(fields: [showingId], references: [id], onDelete: Cascade)
+  seats           BookingSeat[]
 
   @@map("booking")
 }

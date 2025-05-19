@@ -1,5 +1,6 @@
+//予約済みの差席を取得するapi
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '../../../../../generated/prisma/client';
+import { PrismaClient } from '@/generated/prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -7,7 +8,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const id = params.id;
+  const {id} = await params;
 
   try {
     // 指定した上映に対する予約済み座席を取得
