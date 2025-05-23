@@ -13,6 +13,19 @@ type Showing = {
   screenNumber: string;
   screenId: string;
   screenSize: ScreenSize;
+  movieId: string;
+    movie: {
+        title: string;
+        duration: string;
+        releaseDate: string;
+    };
+    screen: {
+        number: string;
+        cinema: {
+            name: string;
+        };
+    };
+
 };
 
 interface BookingDetails {
@@ -25,6 +38,12 @@ interface BookingDetails {
   totalAmount: number;
   status: string;
 }
+
+type Seat = {
+  id: string;
+  seatNumber: string;
+};
+
 
 export default function BookingConfirmPage() {
   const searchParams = useSearchParams();
@@ -41,10 +60,13 @@ export default function BookingConfirmPage() {
   // 状態管理
   const [showing, setShowing] = useState<Showing | null>(null);
   const [booking, setBooking] = useState<BookingDetails | null>(null);
+  const [seatsInfo, setSeatsInfo] = useState<Seat[]>([]);
+  const [loadingSeats, setLoadingSeats] = useState(true);
   const [loadingShowing, setLoadingShowing] = useState(true);
   const [loadingBooking, setLoadingBooking] = useState(true);
   const [errorShowing, setErrorShowing] = useState<string | null>(null);
   const [errorBooking, setErrorBooking] = useState<string | null>(null);
+  const [errorSeats, setErrorSeats] = useState<string | null>(null);
 
   // 上映情報を取得
   useEffect(() => {
@@ -92,6 +114,31 @@ export default function BookingConfirmPage() {
     };
     fetchBooking();
   }, [bookingId]);
+
+  useEffect(() => {
+    const fetchSeats = async () => {
+      if (!seatIds.length || booking) {
+        setLoadingSeats(false); // 予約詳細がある場合は API 不要
+        return;
+      }
+
+      try {
+        const query = seatIds.map((id) => `ids=${id}`).join('&');
+        const res = await fetch(`/api/seats?${query}`);
+        if (!res.ok) throw new Error('座席情報の取得に失敗');
+        const data: Seat[] = await res.json();
+        setSeatsInfo(data);
+        setErrorSeats(null);
+      } catch (e) {
+        setErrorSeats('座席情報の取得に失敗しました');
+      } finally {
+        setLoadingSeats(false);
+      }
+    };
+
+    fetchSeats();
+  }, [booking]);
+
   const handleConfirmBooking = async () => {
       try {
           const response = await fetch(`/api/bookings`, {
@@ -120,10 +167,10 @@ export default function BookingConfirmPage() {
 
   // 表示用の映画情報は予約詳細があればそちら、なければ上映情報
   const movieTitle = booking?.title || showing?.title || '';
-  const screenName = booking?.screenName || showing?.screenNumber || '';
+  const screenName = booking?.screenName || showing?.screen.number || '';
   const startTime = booking?.startTime || showing?.startTime || '';
   const seats = booking?.seats.length ? booking.seats : seatIds;
-  const totalAmount = booking?.totalAmount || (seats.length * (showing?.price || 0));
+  const totalPrice = booking?.totalAmount || (seats.length * (showing?.price || 0));
 
   const formattedDate = new Date(startTime).toLocaleString('ja-JP', {
     year: 'numeric',
@@ -137,25 +184,28 @@ export default function BookingConfirmPage() {
       <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-center mb-6">予約確認</h1>
 
-        {/* 予約番号は表示しない */}
 
         {/* 映画情報 */}
         <div className="border-t border-gray-200 pt-4 mb-4">
           <h2 className="text-lg font-semibold mb-2">映画情報</h2>
           <p className="text-xl mb-1">{movieTitle}</p>
           <p>上映時刻 : {formattedDate}</p>
+          <p>シネマ : {showing?.screen.cinema.name}</p>
           <p>スクリーン : {screenName}</p>
+          <p>上映時間 : {showing?.movie.duration} 分</p>
+
         </div>
 
         {/* 座席 */}
         <div className="border-t border-gray-200 pt-4 mb-4">
           <h2 className="text-lg font-semibold mb-2">座席</h2>
           <div className="flex flex-wrap gap-2">
-            {seats.map((seat, i) => (
+            {(booking?.seats || seatsInfo.map(s => s.seatNumber)).map((seat, i) => (
                 <span key={i} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-              {seat}
-            </span>
-            ))}
+                  {seat}
+                </span>
+                )
+            )}
           </div>
         </div>
 
@@ -164,7 +214,7 @@ export default function BookingConfirmPage() {
           <h2 className="text-lg font-semibold mb-2">お支払い</h2>
           <div className="flex justify-between text-lg">
             <span>合計金額</span>
-            <span className="font-bold">¥{totalAmount.toLocaleString()}</span>
+            <span className="font-bold">¥{totalPrice.toLocaleString()}</span>
           </div>
         </div>
 

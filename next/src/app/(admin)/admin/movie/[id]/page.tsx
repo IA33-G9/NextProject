@@ -126,7 +126,6 @@ export default function MovieDetailPage({
         })) || []
       };
 
-      console.log('Sending movie data:', movieData); // デバッグ用
 
       const response = await fetch(`/api/movies/${movieId}`, {
         method: 'PUT',

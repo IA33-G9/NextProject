@@ -59,7 +59,7 @@ export default function MoviesPage() {
           <p className="text-gray-600">映画情報がありません。新しい映画を追加してください。</p>
         </div>
       ) : (
-        <MovieFilter initialMovies={movies} />
+        <MovieFilter Movies={movies} />
       )}
     </div>
   );

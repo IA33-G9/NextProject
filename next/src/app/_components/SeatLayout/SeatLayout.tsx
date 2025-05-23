@@ -1,3 +1,6 @@
+//座席の状態を管理するためのcomponent
+//座席の状態は、予約済み、選択中、使用不可の3つの状態を持つ
+
 import React, { useState, useEffect } from 'react';
 import { ScreenSize } from '@/generated/prisma/client';
 
@@ -16,7 +19,7 @@ type SeatLayoutProps = {
   screenId: string;
   showingId?: string; // 上映IDを追加
   bookedSeats?: string[]; // 予約済み座席のID
-  onSeatSelect?: (seatId: string, isSelected: boolean) => void;
+  onSeatSelect?: (seatId: string, isSelected: boolean, row: string, column: number) => void;
 };
 
 const SeatLayout: React.FC<SeatLayoutProps> = ({
@@ -129,12 +132,15 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
   const handleSeatClick = (seat: Seat) => {
     if (!seat.isActive || seat.isBooked) return;
 
+    const newSelectedState = !seat.isSelected;
+
+    // onSeatSelectコールバックを呼び出し、row（文字列）とcolumn（数値）を渡す
+    if (onSeatSelect) {
+      onSeatSelect(seat.id, newSelectedState, seat.row, seat.column);
+    }
+
     const newSeats = seats.map((s) => {
       if (s.id === seat.id) {
-        const newSelectedState = !s.isSelected;
-        if (onSeatSelect) {
-          onSeatSelect(s.id, newSelectedState);
-        }
         return { ...s, isSelected: newSelectedState };
       }
       return s;

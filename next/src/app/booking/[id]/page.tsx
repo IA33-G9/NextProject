@@ -16,6 +16,18 @@ type Showings = {
     screenNumber: string;
     screenId : string;
     screenSize: ScreenSize;
+    movieId : string;
+    movie: {
+        title: string;
+        duration: string;
+        releaseDate: string;
+    };
+    screen: {
+        number: string;
+        cinema: {
+            name: string;
+        };
+    };
 }
 
 export default  function BookingPage(){
@@ -23,7 +35,7 @@ export default  function BookingPage(){
     const router = useRouter();
     const showingId  = params.id as string;
 
-    const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+    const [selectedSeats, setSelectedSeats] = useState<Array<{ id: string; label: string }>>([]);
     const [showing, setShowing] = useState<Showings | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -53,14 +65,16 @@ export default  function BookingPage(){
         }
     }, [showingId]);
 
-    const handleSeatSelect = (seatId: string, isSelected: boolean) => {
-        if (isSelected) {
-          setSelectedSeats([...selectedSeats, seatId]);
+    const handleSeatSelect = (seatId: string, isSelected: boolean, row: string, column: number) => {
+      const seatLabel = `${row}${column}`;
 
-        } else {
-          setSelectedSeats(selectedSeats.filter(id => id !== seatId));
-        }
+      if (isSelected) {
+        setSelectedSeats((prev) => [...prev, { id: seatId, label: seatLabel }]);
+      } else {
+        setSelectedSeats((prev) => prev.filter(seat => seat.id !== seatId));
+      }
     };
+
 
 
     const handleGoToConfirm = () => {
@@ -70,7 +84,7 @@ export default  function BookingPage(){
       }
 
       // URLクエリで渡す
-      const seatQuery = selectedSeats.join(',');
+      const seatQuery = selectedSeats.map(seat => seat.id).join(',');
       router.push(`/booking/confirm?showingId=${showingId}&seats=${seatQuery}`);
     };
 
@@ -95,16 +109,20 @@ export default  function BookingPage(){
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div className="bg-gray-50 p-4 rounded-lg">
                     <h2 className="text-lg font-semibold mb-2">上映情報</h2>
-                    <p><span className="font-medium">日時:</span> {new Date(showing.startTime).toLocaleString('ja-JP')}</p>
-                    <p><span className="font-medium">スクリーン:</span> {showing.screenId}</p>
+                    <p><span className="font-medium">タイトル:</span> {showing.movie.title}</p>
+                    <p><span className="font-medium">上映日時:</span> {new Date(showing.startTime).toLocaleString('ja-JP')}</p>
+                    <p><span className="font-medium">上映時間:</span> {showing.movie.duration}</p>
+                    <p><span className="font-medium">シネマ:</span> {showing.screen.cinema.name}</p>
+                    <p><span className="font-medium">スクリーン:</span> {showing.screen.number}</p>
                     <p><span className="font-medium">料金:</span> {showing.price.toLocaleString()}円 (1席あたり)</p>
                 </div>
 
                 <div className="bg-gray-50 p-4 rounded-lg">
                     <h2 className="text-lg font-semibold mb-2">予約情報</h2>
                     <p><span className="font-medium">選択座席数:</span> {selectedSeats.length}席</p>
-                    <p><span className="font-medium">選択座席:</span> {selectedSeats.join(', ') || '未選択'}</p>
+                    <p><span className="font-medium">選択座席:</span> {selectedSeats.map(seat => seat.label).join(", ") || '未選択'}</p>
                     <p><span className="font-medium">合計金額:</span> {(selectedSeats.length * showing.price).toLocaleString()}円</p>
+
                 </div>
             </div>
 

@@ -13,10 +13,34 @@ export async function GET(
     try {
         const showing = await prisma.showing.findUnique({
         where: { id },
-        include: {
-            movie: true,
-            screen: true,
+        select: {
+            id: true,
+            startTime: true,
+            endTime: true,
+            price: true,
+            movieId: true,
+            screenId: true,
+            movie: {
+                select: {
+                    title  : true,
+                    duration: true,
+                    releaseDate : true,
+                },
+            },
+            screen: {
+                select: {
+                    number: true,
+                    size: true,
+                    cinema: {
+                        select: {
+                            name: true,
+                        },
+                    },
+                },
+            },
+
         },
+
         });
 
         if (!showing) {
@@ -25,7 +49,6 @@ export async function GET(
             { status: 404 }
         );
         }
-
         return NextResponse.json(showing);
     } catch (error) {
         console.error('上映情報取得エラー:', error);

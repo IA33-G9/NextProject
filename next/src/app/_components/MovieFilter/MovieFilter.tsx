@@ -7,20 +7,20 @@ import Image from 'next/image';
 import  { Movie } from '@/type/movie/movie';
 
 interface MovieFilterProps {
-  initialMovies: Movie[];
+  Movies: Movie[];
 }
 
-export default function MovieFilter({ initialMovies }: MovieFilterProps) {
+export default function MovieFilter({ Movies }: MovieFilterProps) {
   const [filter, setFilter] = useState('all');
-  const [filteredMovies, setFilteredMovies] = useState(initialMovies);
+  const [filteredMovies, setFilteredMovies] = useState(Movies);
 
   useEffect(() => {
     if (filter === 'all') {
-      setFilteredMovies(initialMovies);
+      setFilteredMovies(Movies);
     } else if (filter === 'showing') {
-      setFilteredMovies(initialMovies.filter(movie => movie.showingCount > 0));
+      setFilteredMovies(Movies.filter(movie => movie.releaseDate < new Date().toISOString() && movie.showingCount > 0));
     }
-  }, [filter, initialMovies]);
+  }, [filter, Movies]);
 
   return (
     <div>
@@ -71,15 +71,28 @@ export default function MovieFilter({ initialMovies }: MovieFilterProps) {
                 {' • '} {movie.duration}分
               </p>
               <p className="text-sm text-gray-700 mb-3 line-clamp-2">{movie.genre}</p>
-              {movie.showingCount > 0 ? (
+
+              {movie.releaseDate < new Date().toISOString() ? (
+                movie.showingCount > 0 ? (
                 <span className="inline-block bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
                   上映中
                 </span>
-              ) : (
-                <span className="inline-block bg-gray-100 text-gray-600 text-xs font-semibold px-2 py-1 rounded">
-                  上映予定
-                </span>
-              )}
+                  ) : movie.releaseDate === new Date().toISOString() ? (
+                    <span className="inline-block bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-1 rounded">
+                      本日公開
+                    </span>
+                  ) : (
+                    <span className="inline-block bg-gray-100 text-gray-600 text-xs font-semibold px-2 py-1 rounded">
+                      上映予定
+                    </span>
+                  )
+                ) : (
+                  <span className="inline-block bg-gray-100 text-gray-600 text-xs font-semibold px-2 py-1 rounded">
+                    上映予定
+                  </span>
+                )}
+
+
             </div>
           </Link>
         ))}
