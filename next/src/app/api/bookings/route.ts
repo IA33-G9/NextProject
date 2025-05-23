@@ -1,3 +1,4 @@
+//予約の作成をするAPI
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@/generated/prisma/client';
 import { generateBookingReference } from '@/lib/bookingnum/num';
@@ -69,5 +70,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('予約作成エラー:', error);
     return Response.json({ message: 'Internal Server Error' }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 }

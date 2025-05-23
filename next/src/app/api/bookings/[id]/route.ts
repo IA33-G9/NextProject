@@ -1,4 +1,4 @@
-// src/app/api/bookings/[bookingId]/route.ts
+//予約情報を取得するAPI
 import { PrismaClient } from '@/generated/prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -44,8 +44,6 @@ export async function GET(
       return NextResponse.json({ message: '予約情報が見つかりません' }, { status: 404 });
     }
 
-    // デバッグ情報
-    console.log(`API: Successfully found booking with ID: ${id}`);
 
     // 座席情報をフォーマット
     const seatLabels = booking.seats.map(bookingSeat =>
@@ -71,5 +69,7 @@ export async function GET(
       message: 'Internal Server Error',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 }

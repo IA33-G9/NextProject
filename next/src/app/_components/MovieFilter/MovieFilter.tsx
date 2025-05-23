@@ -43,9 +43,10 @@ export default function MovieFilter({ initialMovies }: MovieFilterProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredMovies.map((movie) => (
+
           <Link
             key={movie.id}
-            href={`/movie/${movie.id}`}
+            href={`movie/${movie.id}`}
             className="block bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300"
           >
             <div className="relative h-64 w-full">
@@ -83,6 +84,7 @@ export default function MovieFilter({ initialMovies }: MovieFilterProps) {
           </Link>
         ))}
       </div>
+
     </div>
   );
 }

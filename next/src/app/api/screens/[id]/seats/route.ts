@@ -34,5 +34,7 @@ export async function GET(
       { message: '座席情報の取得に失敗しました。' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }

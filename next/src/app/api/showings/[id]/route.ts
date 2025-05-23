@@ -33,5 +33,7 @@ export async function GET(
         { message: '上映情報の取得に失敗しました。' },
         { status: 500 }
         );
-    }
-    }
+    } finally {
+    await prisma.$disconnect();
+  }
+}
