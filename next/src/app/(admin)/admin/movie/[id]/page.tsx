@@ -35,6 +35,13 @@ export default function MovieDetailPage({
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [screens, setScreens] = useState<Screen[]>([]);
+
+  // 画像アップロード関連の状態
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null); // 元の画像URLを保存
+
   const router = useRouter();
 
   // スクリーン一覧を取得
@@ -73,9 +80,11 @@ export default function MovieDetailPage({
         }
 
         const data = await response.json();
-        console.log('Fetched movie data:', data); // デバッグ用
+        console.log('Fetched movie data:', data);
         setMovie(data);
-        setEditedMovie(data); // 編集用の状態も初期化
+        setEditedMovie(data);
+        setPreviewUrl(data.imageUrl); // プレビュー画像も設定
+        setOriginalImageUrl(data.imageUrl); // 元の画像URLを保存
         setLoading(false);
       } catch (err) {
         console.error('映画取得エラー:', err);
@@ -87,15 +96,102 @@ export default function MovieDetailPage({
     fetchMovie();
   }, [movieId, router]);
 
+  // 既存画像を削除する関数
+  const deleteExistingImage = async (imageUrl: string) => {
+    try {
+      const response = await fetch('/api/images', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: imageUrl }),
+      });
+
+      if (!response.ok) {
+        console.error('既存画像の削除に失敗しました:', await response.text());
+        // 削除に失敗してもアップロードは継続する
+      }
+    } catch (err) {
+      console.error('既存画像削除エラー:', err);
+      // エラーが発生してもアップロードは継続する
+    }
+  };
+
+  // ファイルアップロード処理
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // ファイルサイズ制限 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('ファイルサイズは5MB以下にしてください');
+      return;
+    }
+
+    // ファイル形式チェック
+    if (!file.type.startsWith('image/')) {
+      setUploadError('画像ファイルを選択してください');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      setUploadError(null);
+
+      // 既存の画像がある場合は削除
+      if (previewUrl && previewUrl !== originalImageUrl) {
+        await deleteExistingImage(previewUrl);
+      } else if (originalImageUrl && originalImageUrl !== previewUrl) {
+        await deleteExistingImage(originalImageUrl);
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/images', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'ファイルのアップロードに失敗しました');
+      }
+
+      const data = await response.json();
+      const imageUrl = data.url;
+
+      // プレビューと編集中のデータを更新
+      setPreviewUrl(imageUrl);
+      setEditedMovie(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          imageUrl: imageUrl
+        };
+      });
+
+    } catch (err) {
+      console.error('アップロードエラー:', err);
+      setUploadError(err instanceof Error ? err.message : 'ファイルのアップロードに失敗しました');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleEditClick = () => {
     setIsEditing(true);
+    setPreviewUrl(movie?.imageUrl || null);
+    setOriginalImageUrl(movie?.imageUrl || null);
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
-    // 編集内容を破棄して元の状態に戻す
     setEditedMovie(movie);
+    setPreviewUrl(movie?.imageUrl || null);
+    setOriginalImageUrl(movie?.imageUrl || null);
     setSaveError(null);
+    setUploadError(null);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -107,6 +203,28 @@ export default function MovieDetailPage({
         [name]: value
       };
     });
+
+    // 画像URLが手動で変更された場合、プレビューも更新
+    if (name === 'imageUrl') {
+      setPreviewUrl(value);
+    }
+  };
+
+  // 画像を削除する関数
+  const handleImageDelete = async () => {
+    if (previewUrl) {
+      try {
+        // アップロードされた画像の場合は物理削除も実行
+        if (previewUrl !== originalImageUrl) {
+          await deleteExistingImage(previewUrl);
+        }
+      } catch (err) {
+        console.error('画像削除エラー:', err);
+      }
+    }
+
+    setPreviewUrl(null);
+    setEditedMovie(prev => prev ? {...prev, imageUrl: ''} : prev);
   };
 
   const handleSaveClick = async () => {
@@ -116,16 +234,21 @@ export default function MovieDetailPage({
       setIsSaving(true);
       setSaveError(null);
 
-      // showingsデータを適切な形式に変換
+      // 保存時に、元の画像と異なる場合は元の画像を削除
+      if (originalImageUrl &&
+          originalImageUrl !== editedMovie.imageUrl &&
+          editedMovie.imageUrl !== '') {
+        await deleteExistingImage(originalImageUrl);
+      }
+
       const movieData = {
         ...editedMovie,
         showings: editedMovie.showings?.map(showing => ({
           startTime: showing.startTime,
-          screenId: showing.screenId, // フロント側で選択されたscreenIdを使用
+          screenId: showing.screenId,
           price: showing.price
         })) || []
       };
-
 
       const response = await fetch(`/api/movies/${movieId}`, {
         method: 'PUT',
@@ -139,7 +262,6 @@ export default function MovieDetailPage({
         const errorData = await response.json().catch(() => ({}));
         console.error('API Error:', errorData);
 
-        // より詳細なエラーメッセージを表示
         if (errorData.error?.includes('screen')) {
           throw new Error('スクリーン情報が見つかりません。管理者にお問い合わせください。');
         } else if (errorData.error?.includes('Foreign key')) {
@@ -152,10 +274,10 @@ export default function MovieDetailPage({
       const updatedMovie = await response.json();
       setMovie(updatedMovie);
       setEditedMovie(updatedMovie);
+      setOriginalImageUrl(updatedMovie.imageUrl); // 新しい画像URLを元のURLとして保存
       setIsEditing(false);
       setIsSaving(false);
 
-      // 成功メッセージなどを表示できる
     } catch (err) {
       console.error('映画更新エラー:', err);
       setSaveError(err instanceof Error ? err.message : '映画情報の更新に失敗しました。もう一度お試しください。');
@@ -167,7 +289,6 @@ export default function MovieDetailPage({
   if (error) return <div>{error}</div>;
   if (!movie) return <div>映画情報が見つかりません</div>;
 
-  // showingsがあるかチェック（undefined、null、空配列の場合に対応）
   const hasShowings = movie.showings && movie.showings.length > 0;
 
   // 表示モード
@@ -353,26 +474,98 @@ export default function MovieDetailPage({
             </div>
           </div>
 
+          {/* 画像アップロード機能 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              画像URL
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              映画ポスター画像
             </label>
-            <input
-                type="text"
-                name="imageUrl"
-                value={editedMovie?.imageUrl || ''}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
-            />
 
-            {editedMovie?.imageUrl && (
-                <div className="mt-2 relative w-32 h-48">
-                  <Image
-                      src={editedMovie.imageUrl}
-                      alt="映画ポスタープレビュー"
-                      fill
-                      className="object-cover rounded"
-                  />
+            <div className="space-y-4">
+              {/* ファイルアップロード */}
+              <div>
+                <div className="flex items-center justify-center w-full">
+                  <label htmlFor="image-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      {isUploading ? (
+                        <div className="flex items-center">
+                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span className="text-sm text-blue-500">アップロード中...</span>
+                        </div>
+                      ) : (
+                        <>
+                          <svg className="w-8 h-8 mb-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                          </svg>
+                          <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">クリックしてファイルを選択</span> またはドラッグ&ドロップ
+                          </p>
+                          <p className="text-xs text-gray-500">PNG, JPG, GIF (最大5MB)</p>
+                          {previewUrl && (
+                            <p className="text-xs text-orange-600 mt-1">
+                              ※ 新しい画像を選択すると既存の画像は削除されます
+                            </p>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    <input
+                      id="image-upload"
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      disabled={isUploading}
+                    />
+                  </label>
+                </div>
+
+                {uploadError && (
+                  <div className="mt-2 text-sm text-red-600">
+                    {uploadError}
+                  </div>
+                )}
+              </div>
+
+              {/* URLでの直接入力 */}
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">
+                  または画像URLを直接入力
+                </label>
+                <input
+                    type="text"
+                    name="imageUrl"
+                    value={editedMovie?.imageUrl || ''}
+                    onChange={handleInputChange}
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* 画像プレビュー */}
+            {previewUrl && (
+                <div className="mt-4">
+                  <div className="relative w-32 h-48 border border-gray-200 rounded overflow-hidden">
+                    <Image
+                        src={previewUrl}
+                        alt="映画ポスタープレビュー"
+                        fill
+                        className="object-cover"
+                        onError={() => {
+                          setPreviewUrl(null);
+                          setUploadError('画像の読み込みに失敗しました');
+                        }}
+                    />
+                  </div>
+                  <button
+                    onClick={handleImageDelete}
+                    className="mt-2 text-sm text-red-600 hover:text-red-800"
+                  >
+                    画像を削除
+                  </button>
                 </div>
             )}
           </div>
@@ -511,8 +704,8 @@ export default function MovieDetailPage({
                 onClick={() => {
                   const newShowing = {
                     startTime: new Date().toISOString(),
-                    screenId: screens.length > 0 ? screens[0].id : '', // 最初のスクリーンをデフォルトに
-                    price: 1800 // デフォルト価格
+                    screenId: screens.length > 0 ? screens[0].id : '',
+                    price: 1800
                   };
                   setEditedMovie(prev => prev ? {
                     ...prev,

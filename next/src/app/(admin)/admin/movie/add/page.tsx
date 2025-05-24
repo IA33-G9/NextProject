@@ -37,6 +37,9 @@ export default function AddMoviePage() {
   const [loading, setLoading] = useState(false);
   const [fetchingScreens, setFetchingScreens] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const router = useRouter();
 
   // スクリーン情報を取得
@@ -75,6 +78,58 @@ export default function AddMoviePage() {
         duration: parseInt(value) || 0
       });
     }
+  };
+
+  // 画像ファイル選択ハンドラ
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // ファイルタイプの検証
+      if (!file.type.startsWith('image/')) {
+        alert('画像ファイルを選択してください');
+        return;
+      }
+
+      // ファイルサイズの検証（5MB制限）
+      if (file.size > 5 * 1024 * 1024) {
+        alert('ファイルサイズは5MB以下にしてください');
+        return;
+      }
+
+      setImageFile(file);
+
+      // プレビュー画像を作成
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      // URLフィールドをクリア
+      setMovieData({
+        ...movieData,
+        imageUrl: ''
+      });
+    }
+  };
+
+  // 画像アップロード関数
+  const uploadImage = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await fetch('/api/images', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || '画像のアップロードに失敗しました');
+    }
+
+    const data = await response.json();
+    return data.imageUrl;
   };
 
   // 上映情報入力ハンドラ
@@ -136,9 +191,24 @@ export default function AddMoviePage() {
       setLoading(true);
       setError(null);
 
+      let finalImageUrl = movieData.imageUrl;
+
+      // 画像ファイルがある場合はアップロード
+      if (imageFile) {
+        setUploadingImage(true);
+        try {
+          finalImageUrl = await uploadImage(imageFile);
+        } catch (uploadError: any) {
+          throw new Error(`画像アップロードエラー: ${uploadError.message}`);
+        } finally {
+          setUploadingImage(false);
+        }
+      }
+
       // 映画と上映時間を含むデータを準備
       const movieWithShowings = {
         ...movieData,
+        imageUrl: finalImageUrl,
         showings: showings.map(showing => ({
           startTime: showing.startTime,
           price: showing.price,
@@ -279,16 +349,72 @@ export default function AddMoviePage() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">ポスター画像URL</label>
-              <input
-                type="url"
-                name="imageUrl"
-                value={movieData.imageUrl}
-                onChange={handleMovieInputChange}
-                placeholder="https://example.com/movie-poster.jpg"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+            {/* ポスター画像セクション */}
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">ポスター画像</label>
+
+              {/* ファイルアップロード */}
+              <div className="mb-4">
+                <label className="block text-sm text-gray-600 mb-2">画像ファイルをアップロード</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageFileChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">対応形式: JPG, PNG, GIF など（最大5MB）</p>
+              </div>
+
+              {/* 区切り線 */}
+              <div className="flex items-center my-4">
+                <div className="flex-1 border-t border-gray-300"></div>
+                <span className="px-3 text-sm text-gray-500">または</span>
+                <div className="flex-1 border-t border-gray-300"></div>
+              </div>
+
+              {/* URL入力 */}
+              <div>
+                <label className="block text-sm text-gray-600 mb-2">画像URL</label>
+                <input
+                  type="url"
+                  name="imageUrl"
+                  value={movieData.imageUrl}
+                  onChange={handleMovieInputChange}
+                  placeholder="https://example.com/movie-poster.jpg"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={!!imageFile}
+                />
+              </div>
+
+              {/* 画像プレビュー */}
+              {(imagePreview || movieData.imageUrl) && (
+                <div className="mt-4">
+                  <label className="block text-sm text-gray-600 mb-2">プレビュー</label>
+                  <div className="w-48 h-64 border border-gray-300 rounded-md overflow-hidden">
+                    <img
+                      src={imagePreview || movieData.imageUrl}
+                      alt="プレビュー"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.error('画像の読み込みに失敗しました:', e.currentTarget.src);
+                        e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjI1NiIgdmlld0JveD0iMCAwIDE5MiAyNTYiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMjU2IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik05NiAxMjhMMTI4IDk2TDE2MCA1NC0zMiA5NloiIGZpbGw9IiNEMUQ1REIiLz4KPGV5Y2xlIGN4PSI3MiIgY3k9Ijc4IiByPSI2IiBmaWxsPSIjRDFENURCIi8+Cjx0ZXh0IHg9Ijk2IiB5PSIxNDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzlDQTNBRiI+5pCs5ZGV44Od44K544K/44O8PC90ZXh0Pgo8L3N2Zz4K';
+                      }}
+                    />
+                  </div>
+                  {imageFile && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImageFile(null);
+                        setImagePreview(null);
+                      }}
+                      className="mt-2 text-sm text-red-600 hover:text-red-800"
+                    >
+                      ファイルを削除
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             <div>
@@ -433,10 +559,18 @@ export default function AddMoviePage() {
         <div className="flex justify-end">
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || uploadingImage}
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-md flex items-center disabled:bg-blue-300"
           >
-            {loading ? (
+            {uploadingImage ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                画像アップロード中...
+              </>
+            ) : loading ? (
               <>
                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

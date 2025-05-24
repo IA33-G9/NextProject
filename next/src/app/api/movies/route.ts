@@ -4,6 +4,7 @@ import { PrismaClient } from '@/generated/prisma/client';
 
 const prisma = new PrismaClient();
 // 映画情報の作成
+//作成はadminuserかどうかを確認してから行う
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
