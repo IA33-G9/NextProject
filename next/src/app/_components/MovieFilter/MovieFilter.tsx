@@ -4,7 +4,20 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
-import  { Movie } from '@/type/movie/movie';
+export type Movie = {
+  id: string;
+  title: string;
+  releaseDate: string;
+  duration: number;
+  genre: string;
+  description?: string;
+  director: string;
+  casts: string;
+  imageUrl?: string;
+  trailerUrl?: string;
+  showings: any[];
+  showingCount: number;
+};
 
 interface MovieFilterProps {
   Movies: Movie[];

@@ -6,7 +6,21 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import ShowingSchedule from '@/app/_components/ShowingSchedule/ShowingSchedule';
-import { Movie } from '@/type/movie/movie';
+
+export type Movie = {
+  id: string;
+  title: string;
+  releaseDate: string;
+  duration: number;
+  genre: string;
+  description?: string;
+  director: string;
+  casts: string;
+  imageUrl?: string;
+  trailerUrl?: string;
+  showings: any[];
+  showingCount: number;
+};
 
 export default function MovieDetailPage({
   params: paramsPromise

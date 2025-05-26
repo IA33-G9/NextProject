@@ -4,9 +4,24 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import SeatLayout from '@/app/_components/SeatLayout/SeatLayout';
-import  { Screen } from '@/type/screen/screen';
 
+import { ScreenSize } from '@/generated/prisma/client';
 
+export type Cinema = {
+  id: string;
+  name: string;
+  location: string;
+};
+
+export type Screen = {
+  id: string;
+  number: string;
+  size: ScreenSize;
+  rows: number;
+  columns: number;
+  capacity: number;
+  cinema: Cinema;
+};
 // スクリーンサイズの日本語表示
 const screenSizeLabel = {
   LARGE: '大スクリーン',

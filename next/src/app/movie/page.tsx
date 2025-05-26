@@ -2,7 +2,21 @@
 
 import { useEffect, useState } from 'react';
 import MovieFilter from '@/app/_components/MovieFilter/MovieFilter';
-import  { Movie } from '@/type/movie/movie';
+
+export type Movie = {
+  id: string;
+  title: string;
+  releaseDate: string;
+  duration: number;
+  genre: string;
+  description?: string;
+  director: string;
+  casts: string;
+  imageUrl?: string;
+  trailerUrl?: string;
+  showings: any[];
+  showingCount: number;
+};
 
 
 export default function MoviesPage() {

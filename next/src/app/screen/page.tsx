@@ -2,8 +2,23 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Screen } from '@/type/screen/screen';
+import { ScreenSize } from '@/generated/prisma/client';
 
+export type Cinema = {
+  id: string;
+  name: string;
+  location: string;
+};
+
+export type Screen = {
+  id: string;
+  number: string;
+  size: ScreenSize;
+  rows: number;
+  columns: number;
+  capacity: number;
+  cinema: Cinema;
+};
 // スクリーンサイズの日本語表示
 const screenSizeLabel = {
   LARGE: '大スクリーン',
