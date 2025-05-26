@@ -89,24 +89,7 @@ export default function BookingConfirmPage() {
         );
     }
 
-    if (error) {
-        return (
-            <div className="max-w-md mx-auto mt-10 p-6 bg-red-50 border border-red-200 rounded-lg">
-                <h2 className="text-red-600 text-xl font-semibold mb-4">エラーが発生しました</h2>
-                <p className="mb-4">{error}</p>
-                <div className="p-4 bg-gray-50 rounded border border-gray-200 mb-4">
-                    <p className="font-medium">デバッグ情報:</p>
-                    <p className="font-mono text-sm mt-1">予約ID: {bookingId || 'なし'}</p>
-                </div>
-                <button
-                    onClick={() => window.location.href = '/'}
-                    className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                >
-                    トップページに戻る
-                </button>
-            </div>
-        );
-    }
+    if (error) return <div>{error}</div>;
 
     if (!booking) {
         return (
@@ -132,48 +115,48 @@ export default function BookingConfirmPage() {
     });
 
     return (
-        <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md">
-            <h1 className="text-2xl font-bold text-center mb-6">予約確認</h1>
+        <div>
+            <h1>予約確認</h1>
 
-            <div className="mb-8 text-center">
-        <span className="bg-green-100 text-green-800 font-medium px-3 py-1 rounded-full">
+            <div>
+        <span>
           予約完了
         </span>
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                <h2 className="text-lg font-semibold mb-2">予約番号</h2>
-                <p className="text-2xl font-mono text-center">{booking.bookingReference}</p>
+            <div>
+                <h2>予約番号</h2>
+                <p>{booking.bookingReference}</p>
             </div>
 
-            <div className="border-t border-gray-200 pt-4 mb-4">
-                <h2 className="text-lg font-semibold mb-2">映画情報</h2>
+            <div>
+                <h2>映画情報</h2>
 
-                <p className="text-xl mb-1">{booking.title}</p>
+                <p>{booking.title}</p>
                 <p>上映時刻 : {formattedDate}</p>
                 <p>スクリーン : {booking.screenName}</p>
             </div>
 
-            <div className="border-t border-gray-200 pt-4 mb-4">
-                <h2 className="text-lg font-semibold mb-2">座席</h2>
-                <div className="flex flex-wrap gap-2">
+            <div>
+                <h2>座席</h2>
+                <div>
                     {booking.seats.map((seat, index) => (
-                        <span key={index} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-              {seat}
-            </span>
+                        <span key={index}>
+                            {seat}
+                        </span>
                     ))}
                 </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-4 mb-8">
-                <h2 className="text-lg font-semibold mb-2">お支払い</h2>
-                <div className="flex justify-between text-lg">
+            <div>
+                <h2>お支払い</h2>
+                <div>
                     <span>合計金額</span>
-                    <span className="font-bold">¥{booking.totalAmount.toLocaleString()}</span>
+                    <span>¥{booking.totalAmount.toLocaleString()}</span>
                 </div>
             </div>
 
-            <div className="text-center">
+            <div>
                 <button
                     onClick={() => window.print()}
                     className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"

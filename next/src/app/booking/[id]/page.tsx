@@ -95,39 +95,36 @@ export default  function BookingPage(){
 
     return (
     <div className="container mx-auto p-4 md:p-6">
-        <div className="mb-8">
-            <Link href="/movie" className="text-blue-600 hover:underline flex items-center">
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            上映スケジュールに戻る
+        <div>
+            <Link href="/movie">
+            ＜上映スケジュールに戻る
             </Link>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h1 className="text-2xl font-bold mb-6 text-center">{showing.title}</h1>
+        <div>
+            <h1>{showing.title}</h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                    <h2 className="text-lg font-semibold mb-2">上映情報</h2>
-                    <p><span className="font-medium">タイトル:</span> {showing.movie.title}</p>
-                    <p><span className="font-medium">上映日時:</span> {new Date(showing.startTime).toLocaleString('ja-JP')}</p>
-                    <p><span className="font-medium">上映時間:</span> {showing.movie.duration}</p>
-                    <p><span className="font-medium">シネマ:</span> {showing.screen.cinema.name}</p>
-                    <p><span className="font-medium">スクリーン:</span> {showing.screen.number}</p>
-                    <p><span className="font-medium">料金:</span> {showing.price.toLocaleString()}円 (1席あたり)</p>
+            <div>
+                <div>
+                    <h2>上映情報</h2>
+                    <p>タイトル: {showing.movie.title}</p>
+                    <p>上映日時: {new Date(showing.startTime).toLocaleString('ja-JP')}</p>
+                    <p>上映時間: {showing.movie.duration}</p>
+                    <p>シネマ: {showing.screen.cinema.name}</p>
+                    <p>スクリーン: {showing.screen.number}</p>
+                    <p>料金: {showing.price.toLocaleString()}円 (1席あたり)</p>
                 </div>
 
-                <div className="bg-gray-50 p-4 rounded-lg">
-                    <h2 className="text-lg font-semibold mb-2">予約情報</h2>
-                    <p><span className="font-medium">選択座席数:</span> {selectedSeats.length}席</p>
-                    <p><span className="font-medium">選択座席:</span> {selectedSeats.map(seat => seat.label).join(", ") || '未選択'}</p>
-                    <p><span className="font-medium">合計金額:</span> {(selectedSeats.length * showing.price).toLocaleString()}円</p>
+                <div>
+                    <h2>予約情報</h2>
+                    <p>選択座席数: {selectedSeats.length}席</p>
+                    <p>選択座席: {selectedSeats.map(seat => seat.label).join(", ") || '未選択'}</p>
+                    <p>合計金額: {(selectedSeats.length * showing.price).toLocaleString()}円</p>
 
                 </div>
             </div>
 
-            <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4 text-center">座席を選択してください</h2>
+            <div>
+                <h2>座席を選択してください</h2>
                 <SeatLayout
                 screenSize={showing.screenSize}
                 screenId={showing.screenId}
@@ -136,7 +133,7 @@ export default  function BookingPage(){
                 />
             </div>
 
-            <div className="flex justify-center">
+            <div>
                 <button
                     onClick={handleGoToConfirm}
                     disabled={selectedSeats.length === 0}
@@ -146,7 +143,7 @@ export default  function BookingPage(){
                         : 'bg-blue-600 hover:bg-blue-700'}`}
                 >
                     {selectedSeats.length > 0
-                        ? `${selectedSeats.length}席を確認する`
+                        ? `${selectedSeats.length}席を予約する`
                         : '座席を選択してください'}
                 </button>
 

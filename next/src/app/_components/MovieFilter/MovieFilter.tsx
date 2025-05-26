@@ -41,53 +41,52 @@ export default function MovieFilter({ Movies }: MovieFilterProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div>
         {filteredMovies.map((movie) => (
 
           <Link
             key={movie.id}
             href={`movie/${movie.id}`}
-            className="block bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300"
+
           >
-            <div className="relative h-64 w-full">
+            <div>
               {movie.imageUrl ? (
                 <Image
                   src={movie.imageUrl}
                   alt={movie.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                  className="object-cover"
+                  width={300}
+                  height={300}
                 />
               ) : (
-                <div className="flex items-center justify-center h-full bg-gray-200">
-                  <span className="text-gray-400">画像なし</span>
+                <div className="w-75 h-75 bg-stone-200 c-white">
+                  <span>画像なし</span>
                 </div>
               )}
             </div>
-            <div className="p-4">
-              <h2 className="text-xl font-semibold mb-2 line-clamp-2">{movie.title}</h2>
-              <p className="text-sm text-gray-600 mb-2">
+            <div>
+              <h2>{movie.title}</h2>
+              <p>
                 {new Date(movie.releaseDate).toLocaleDateString('ja-JP')} 公開
                 {' • '} {movie.duration}分
               </p>
-              <p className="text-sm text-gray-700 mb-3 line-clamp-2">{movie.genre}</p>
+              <p>{movie.genre}</p>
 
               {movie.releaseDate < new Date().toISOString() ? (
                 movie.showingCount > 0 ? (
-                <span className="inline-block bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
+                <span>
                   上映中
                 </span>
                   ) : movie.releaseDate === new Date().toISOString() ? (
-                    <span className="inline-block bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-1 rounded">
+                    <span>
                       本日公開
                     </span>
                   ) : (
-                    <span className="inline-block bg-gray-100 text-gray-600 text-xs font-semibold px-2 py-1 rounded">
+                    <span>
                       上映予定
                     </span>
                   )
                 ) : (
-                  <span className="inline-block bg-gray-100 text-gray-600 text-xs font-semibold px-2 py-1 rounded">
+                  <span>
                     上映予定
                   </span>
                 )}

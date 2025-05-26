@@ -48,8 +48,8 @@ export default function ShowingSchedule({ showings }: ShowingScheduleProps) {
 
   return (
     <div>
-      <div className="mb-6 overflow-x-auto">
-        <div className="flex space-x-2">
+      <div>
+        <div>
           {availableDates.map(dateKey => {
             const dateObj = new Date(dateKey);
             const isToday = isSameDay(dateObj, new Date());
@@ -64,10 +64,10 @@ export default function ShowingSchedule({ showings }: ShowingScheduleProps) {
                     : 'bg-gray-200 hover:bg-gray-300'
                 }`}
               >
-                <div className="font-medium">
+                <div>
                   {format(dateObj, 'M/d', { locale: ja })}（{format(dateObj, 'E', { locale: ja })}）
                 </div>
-                {isToday && <div className="text-xs">今日</div>}
+                {isToday && <div>今日</div>}
               </button>
             );
           })}
@@ -76,7 +76,7 @@ export default function ShowingSchedule({ showings }: ShowingScheduleProps) {
 
       {selectedDate && groupedShowings[selectedDate] && (
         <div>
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div>
             {/* 映画館ごとにグループ化 */}
             {Object.entries(
               groupedShowings[selectedDate].reduce((acc, showing) => {
@@ -91,32 +91,31 @@ export default function ShowingSchedule({ showings }: ShowingScheduleProps) {
                 return acc;
               }, {} as {[key: string]: {cinema: Cinema, showings: Showing[]}})
             ).map(([cinemaId, { cinema, showings }]) => (
-              <div key={cinemaId} className="mb-8 last:mb-0">
-                <h3 className="text-xl font-semibold mb-4">{cinema.name}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div key={cinemaId}>
+                <h3>{cinema.name}</h3>
+                <div>
                   {showings
                     .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
                     .map(showing => (
                       <Link
                         key={showing.id}
                         href={`/booking/${showing.id}`}
-                        className="block bg-gray-50 rounded-lg p-4 border border-gray-200 hover:bg-gray-100 transition-colors"
                       >
-                        <div className="flex justify-between mb-2">
-                          <span className="font-medium">
+                        <div>
+                          <span>
                             {format(new Date(showing.startTime), 'HH:mm')} - {format(new Date(showing.endTime), 'HH:mm')}
                           </span>
-                          <span className="text-sm text-gray-600">
+                          <span>
                             スクリーン {showing.screen.number}
                           </span>
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div>
                           {showing.screen.size === 'LARGE' && '大スクリーン'}
                           {showing.screen.size === 'MEDIUM' && '中スクリーン'}
                           {showing.screen.size === 'SMALL' && '小スクリーン'}
                         </div>
-                        <div className="mt-2 text-right">
-                          <span className="text-lg font-semibold">¥{showing.price.toLocaleString()}</span>
+                        <div>
+                          <span>¥{showing.price.toLocaleString()}</span>
                         </div>
                       </Link>
                     ))}

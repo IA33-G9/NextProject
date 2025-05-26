@@ -64,7 +64,7 @@ async function main() {
       director: 'サンプル監督',
       casts: 'サンプル俳優1, サンプル俳優2',
       duration: 120,
-      imageUrl: 'https://example.com/sample.jpg',
+      imageUrl: null, // 画像URLは後で設定可能
     },
   });
   console.log(`テスト映画を作成しました: ${movie.id}`);
