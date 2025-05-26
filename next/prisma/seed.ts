@@ -55,7 +55,8 @@ async function main() {
     console.log(`スクリーン ${screenDef.number}番の座席 ${seatsData.length}席を作成しました`);
   }
 
-  const movie = await prisma.movie.create({
+
+  const samplemovie = await prisma.movie.create({
     data: {
       title: 'サンプル映画',
       description: 'これはサンプル映画の説明です。',
@@ -67,30 +68,43 @@ async function main() {
       imageUrl: null, // 画像URLは後で設定可能
     },
   });
-  console.log(`テスト映画を作成しました: ${movie.id}`);
+  console.log(`テスト映画を作成しました: ${samplemovie.id}`);
 
   const startTime = new Date();
   startTime.setHours(startTime.getHours() + 1);
   const endTime = new Date(startTime);
-  endTime.setMinutes(endTime.getMinutes() + movie.duration);
+  endTime.setMinutes(endTime.getMinutes() + samplemovie.duration);
 
   const screenOne = await prisma.screen.findFirst({ where: { number: '1' } });
   if (!screenOne) {
     throw new Error('スクリーン1番が見つかりませんでした');
   }
 
-  const showing = await prisma.showing.create({
+  const sampleshowing = await prisma.showing.create({
     data: {
       startTime,
       endTime,
       price: 1800,
       screenId: screenOne.id,
-      movieId: movie.id,
+      movieId: samplemovie.id,
     },
   });
-  console.log(`テスト上映情報を作成しました: ${showing.id}`);
+  console.log(`テスト上映情報を作成しました: ${sampleshowing.id}`);
+
+  const sampleuser = await prisma.user.create({
+    data: {
+      id:"testuser",
+      username: 'testuser',
+      password: 'testpassword',
+      email: "test@test01.test",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  });
+  console.log(`テストユーザ情報を作成しました: ${sampleuser.id}`);
   console.log('シードが正常に完了しました。');
 }
+
 
 main()
   .catch((e) => {
