@@ -4,12 +4,12 @@ import { PrismaClient } from '@/generated/prisma/client';
 
 const prisma = new PrismaClient();
 
+// 映画の詳細を取得
 export async function GET(
   request: NextRequest,
   { params: paramsInput }: { params: { id: string } | Promise<{ id: string }> }
 ) {
   try {
-    // params が Promise の場合に対応
     const params = paramsInput instanceof Promise ? await paramsInput : paramsInput;
 
     // 映画データの取得
@@ -39,7 +39,7 @@ export async function GET(
     // 映画が見つからない場合
     if (!movie) {
       return NextResponse.json(
-        { error: 'Movie not found' },
+        { message: 'Movie not found' },
         { status: 404 }
       );
     }
@@ -48,7 +48,7 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching movie details:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch movie details' },
+      { message: 'Failed to fetch movie details' },
       { status: 500 }
     );
   } finally {
@@ -57,7 +57,7 @@ export async function GET(
   }
 }
 
-// 映画情報更新ハンドラー（showings更新対応版）
+// 映画情報更新（showings更新対応版）
 export async function PUT(
   request: NextRequest,
   { params: paramsInput }: { params: { id: string } | Promise<{ id: string }> }
@@ -79,7 +79,7 @@ export async function PUT(
     });
 
     if (!existingMovie) {
-      return NextResponse.json({ error: 'Movie not found' }, { status: 404 });
+      return NextResponse.json({ message: 'Movie not found' }, { status: 404 });
     }
 
     const {
@@ -186,11 +186,12 @@ export async function PUT(
       return finalMovie;
     });
 
+
     return NextResponse.json(updatedMovie);
   } catch (error) {
     console.error('Error updating movie:', error);
     return NextResponse.json(
-      { error: 'Failed to update movie' },
+      { message: 'Failed to update movie' },
       { status: 500 }
     );
   } finally {
@@ -198,7 +199,7 @@ export async function PUT(
   }
 }
 
-// 映画削除ハンドラー
+// 映画削除
 export async function DELETE(
   request: Request,
   { params: paramsInput }: { params: { id: string } | Promise<{ id: string }> }

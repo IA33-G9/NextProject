@@ -3,6 +3,7 @@ import {NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/generated/prisma/client';
 
 const prisma = new PrismaClient();
+
 // 映画情報の作成
 //作成はadminuserかどうかを確認してから行う
 export async function POST(req: NextRequest) {
@@ -113,6 +114,8 @@ export async function POST(req: NextRequest) {
     await prisma.$disconnect();
   }
 }
+
+
 export async function GET() {
   try {
     const movies = await prisma.movie.findMany({
@@ -143,7 +146,7 @@ export async function GET() {
     return NextResponse.json(formattedMovies);
   } catch (error) {
     console.error('Error fetching movies:', error);
-    return NextResponse.json({ error: 'Failed to fetch movies' }, { status: 500 });
+    return NextResponse.json({ message: 'Failed to fetch movies' }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }

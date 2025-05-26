@@ -1,18 +1,18 @@
-// app/api/upload/image/route.ts
+//画像をアップロード,削除するAPIエンドポイント
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
 import { unlink } from 'fs/promises';
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const data = await request.formData();
-    const file: File | null = data.get('file') as unknown as File; // 'image' から 'file' に変更
+    const data = await req.formData();
+    const file: File | null = data.get('file') as unknown as File;
 
     if (!file) {
       return NextResponse.json(
-        { error: 'ファイルが選択されていません' }, // message から error に統一
+        { message: 'ファイルが選択されていません' },
         { status: 400 }
       );
     }
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     // ファイルタイプの検証
     if (!file.type.startsWith('image/')) {
       return NextResponse.json(
-        { error: '画像ファイルのみアップロード可能です' },
+        { message: '画像ファイルのみアップロード可能です' },
         { status: 400 }
       );
     }
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     // ファイルサイズの検証（5MB制限）
     if (file.size > 5 * 1024 * 1024) {
       return NextResponse.json(
-        { error: 'ファイルサイズは5MB以下にしてください' },
+        { message: 'ファイルサイズは5MB以下にしてください' },
         { status: 400 }
       );
     }
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     await writeFile(filePath, buffer);
 
     // 公開URLを生成
-    const url = `/uploads/image/movies/${fileName}`; // imageUrl から url に変更
+    const url = `/uploads/image/movies/${fileName}`
 
     return NextResponse.json({
       message: '画像が正常にアップロードされました',
@@ -73,17 +73,20 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('画像アップロードエラー:', error);
     return NextResponse.json(
-      { error: '画像のアップロードに失敗しました' }, // message から error に統一
+      { message: '画像のアップロードに失敗しました' },
       { status: 500 }
     );
   }
 }
+
+
+
 export async function DELETE(req: NextRequest) {
   try {
     const { url } = await req.json();
 
     if (!url || typeof url !== 'string') {
-      return NextResponse.json({ error: '削除対象の画像URLが指定されていません' }, { status: 400 });
+      return NextResponse.json({ message: '削除対象の画像URLが指定されていません' }, { status: 400 });
     }
 
     // public ディレクトリ以下のファイルパスに変換
@@ -92,7 +95,7 @@ export async function DELETE(req: NextRequest) {
 
     // ファイルの存在確認
     if (!existsSync(imagePath)) {
-      return NextResponse.json({ error: '指定された画像ファイルが存在しません' }, { status: 404 });
+      return NextResponse.json({ message: '指定された画像ファイルが存在しません' }, { status: 404 });
     }
 
     // ファイル削除
@@ -102,6 +105,6 @@ export async function DELETE(req: NextRequest) {
 
   } catch (error: any) {
     console.error('画像削除エラー:', error);
-    return NextResponse.json({ error: '画像の削除に失敗しました' }, { status: 500 });
+    return NextResponse.json({ message: '画像の削除に失敗しました' }, { status: 500 });
   }
 }

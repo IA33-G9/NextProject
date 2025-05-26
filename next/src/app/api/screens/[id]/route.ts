@@ -1,3 +1,4 @@
+//スクリーンIDからからスクリーン情報を取得するAPI
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/generated/prisma/client';
 

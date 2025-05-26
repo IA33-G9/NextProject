@@ -1,4 +1,4 @@
-//指定したz席の情報を取得するapi
+//スクリーンIDの指定したz席のrow,columnを取得するapi
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/generated/prisma/client';
 

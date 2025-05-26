@@ -1,3 +1,4 @@
+//すべてのスクリーンを取得するapi
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@/generated/prisma/client';
 

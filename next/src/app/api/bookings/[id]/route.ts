@@ -11,12 +11,9 @@ export async function GET(
   try {
     const { id } = await params;
 
-    console.log(`API: Received request for booking ID: ${id}`);
-
     // 明示的な検証
     if (!id || typeof id !== 'string') {
-      console.error(`API: Invalid booking ID format: ${id}`);
-      return Response.json({ message: 'Invalid booking ID format' }, { status: 400 });
+      return NextResponse.json({ message: 'Invalid booking ID format' }, { status: 400 });
     }
 
     // 予約情報を取得
@@ -40,7 +37,6 @@ export async function GET(
     });
 
     if (!booking) {
-      console.log(`API: Booking not found for ID: ${id}`);
       return NextResponse.json({ message: '予約情報が見つかりません' }, { status: 404 });
     }
 
@@ -51,7 +47,7 @@ export async function GET(
     ).sort();
 
     // レスポンス用のデータをフォーマット
-    const bookingDetails = {
+    const formattebookingDetails = {
       bookingId: booking.id,
       bookingReference: booking.bookingReference,
       movieTitle: booking.showing.movie.title,
@@ -62,13 +58,10 @@ export async function GET(
       status: booking.status,
     };
 
-    return NextResponse.json(bookingDetails);
+    return NextResponse.json(formattebookingDetails);
   } catch (error) {
-    console.error('API: 予約情報取得エラー:', error);
     return NextResponse.json({
-      message: 'Internal Server Error',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+      message: 'Internal Server Error',error}, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }

@@ -1,4 +1,4 @@
-//すべての座席を表示するapi
+//スクリーンIDから座席を取得するapi
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/generated/prisma/client';
 
@@ -26,8 +26,26 @@ export async function GET(
           {column: 'asc'},
         ],
     });
+    if (!seats) {
+        return NextResponse.json(
+            { error: '指定されたスクリーンの座席が見つかりません。' },
+            { status: 404 }
+        );
+    }
 
-    return NextResponse.json(seats);
+
+    // 座席情報を整形
+    const formattedSeats = seats.map(seat => ({
+      id: seat.id,
+      row: seat.row,
+      column: seat.column,
+      isActive: seat.isActive,
+      screenId: seat.screenId,
+    }));
+
+
+    // レスポンスとして座席情報を返す
+    return NextResponse.json(formattedSeats);
   } catch (error) {
     console.error('座席一覧取得エラー:', error);
     return NextResponse.json(

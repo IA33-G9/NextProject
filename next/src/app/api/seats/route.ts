@@ -22,6 +22,10 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    if (!seats) {
+      return NextResponse.json({ message: '指定された座席が見つかりません。' }, { status: 404 });
+    }
+
     // rowとcolumnを seatNumber 文字列に変換（例: A1, B2）
     const formattedSeats = seats.map((seat) => ({
       id: seat.id,
