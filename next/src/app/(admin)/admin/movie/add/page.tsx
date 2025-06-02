@@ -33,7 +33,7 @@ export default function AddMoviePage() {
     screenId: string;
   }>>([]);
   const [newShowing, setNewShowing] = useState(initialShowingData);
-  const [screens, setScreens] = useState<Array<{ id: string; number: string; cinemaName: string }>>([]);
+  const [screens, setScreens] = useState<Array<{ id: string; number: string; cinema :{name:string}}>>([]);
   const [loading, setLoading] = useState(false);
   const [fetchingScreens, setFetchingScreens] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -449,7 +449,7 @@ export default function AddMoviePage() {
                 <option value="">スクリーンを選択</option>
                 {screens.map(screen => (
                   <option key={screen.id} value={screen.id}>
-                    {screen.cinemaName} - スクリーン{screen.number}
+                    {screen.cinema.name} - スクリーン{screen.number}
                   </option>
                 ))}
               </select>
@@ -521,7 +521,7 @@ export default function AddMoviePage() {
                       return (
                         <tr key={index}>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {screen ? `${screen.cinemaName} - スクリーン${screen.number}` : '不明なスクリーン'}
+                            {screen ? `${screen.cinema.name} - スクリーン${screen.number}` : '不明なスクリーン'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {startTime.toLocaleString('ja-JP')}

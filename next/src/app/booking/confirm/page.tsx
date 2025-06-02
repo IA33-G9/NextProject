@@ -123,8 +123,8 @@ export default function BookingConfirmPage() {
       }
 
       try {
-        const query = seatIds.map((id) => `ids=${id}`).join('&');
-        const res = await fetch(`/api/seats?${query}`);
+        const query = seatIds.map((id) => `${id}`).join('&');
+        const res = await fetch(`/api/seats/${query}`);
         if (!res.ok) throw new Error('座席情報の取得に失敗');
         const data: Seat[] = await res.json();
         setSeatsInfo(data);

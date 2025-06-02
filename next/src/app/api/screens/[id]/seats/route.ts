@@ -40,7 +40,6 @@ export async function GET(
       row: seat.row,
       column: seat.column,
       isActive: seat.isActive,
-      screenId: seat.screenId,
     }));
 
 

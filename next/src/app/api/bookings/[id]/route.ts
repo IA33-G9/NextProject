@@ -48,10 +48,10 @@ export async function GET(
 
     // レスポンス用のデータをフォーマット
     const formattebookingDetails = {
-      bookingId: booking.id,
+      id: booking.id,
       bookingReference: booking.bookingReference,
-      movieTitle: booking.showing.movie.title,
-      screenName: booking.showing.screen.number || `スクリーン${booking.showing.screen.number}`,
+      title: booking.showing.movie.title,
+      screen: booking.showing.screen.number || `スクリーン${booking.showing.screen.number}`,
       startTime: booking.showing.startTime.toISOString(),
       seats: seatLabels,
       totalAmount: booking.totalPrice,

@@ -4,17 +4,18 @@ import { PrismaClient } from '@/generated/prisma/client';
 
 const prisma = new PrismaClient();
 
-export async function GET(req: NextRequest) {
-  const searchParams = req.nextUrl.searchParams;
-  const ids = searchParams.getAll('ids'); // ?ids=abc&ids=def&ids=ghi
+export async function GET(req: NextRequest, { params }: { params: Promise<{ seatIds: string }> }) {
+  // paramsをawaitしてから使用
+  const { seatIds: seatIdsParam } = await params;
+  const seatIds = seatIdsParam.split('&').filter(id => id.trim() !== '');
 
-  if (!ids.length) {
+  if (!seatIds.length) {
     return NextResponse.json({ message: '座席IDが指定されていません。' }, { status: 400 });
   }
 
   try {
     const seats = await prisma.seat.findMany({
-      where: { id: { in: ids } },
+      where: { id: { in: seatIds } },
       select: {
         id: true,
         row: true,
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    if (!seats) {
+    if (!seats || seats.length === 0) {
       return NextResponse.json({ message: '指定された座席が見つかりません。' }, { status: 404 });
     }
 
