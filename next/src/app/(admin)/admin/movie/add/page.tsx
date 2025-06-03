@@ -116,9 +116,9 @@ export default function AddMoviePage() {
   // 画像アップロード関数
   const uploadImage = async (file: File): Promise<string> => {
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('file', file);
 
-    const response = await fetch('/api/images', {
+    const response = await fetch('/admin/api/images', {
       method: 'POST',
       body: formData,
     });
@@ -219,7 +219,7 @@ export default function AddMoviePage() {
       };
 
       // API呼び出し
-      const response = await fetch('/api/movies', {
+      const response = await fetch('/admin/api/movies', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -6,7 +6,21 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import ShowingSchedule from '@/app/_components/ShowingSchedule/ShowingSchedule';
-import { Movie } from '@/type/movie/movie';
+
+export type Movie = {
+  id: string;
+  title: string;
+  releaseDate: string;
+  duration: number;
+  genre: string;
+  description?: string;
+  director: string;
+  casts: string;
+  imageUrl?: string;
+  trailerUrl?: string;
+  showings: any[];
+  showingCount: number;
+};
 
 // スクリーンの型定義
 interface Screen {
@@ -99,7 +113,7 @@ export default function MovieDetailPage({
   // 既存画像を削除する関数
   const deleteExistingImage = async (imageUrl: string) => {
     try {
-      const response = await fetch('/api/images', {
+      const response = await fetch('/admin/api/images', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -148,7 +162,7 @@ export default function MovieDetailPage({
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/images', {
+      const response = await fetch('/admin/api/images', {
         method: 'POST',
         body: formData,
       });
@@ -250,7 +264,7 @@ export default function MovieDetailPage({
         })) || []
       };
 
-      const response = await fetch(`/api/movies/${movieId}`, {
+      const response = await fetch(`/admin/api/movies/${movieId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -8,7 +8,7 @@ import { unlink } from 'fs/promises';
 export async function POST(req: NextRequest) {
   try {
     const data = await req.formData();
-    const file: File | null = data.get('file') as unknown as File;
+     const file: File | null = (data.get('image') || data.get('file')) as unknown as File;
 
     if (!file) {
       return NextResponse.json(
@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       message: '画像が正常にアップロードされました',
+      imageUrl: url,
       url, // フロントエンドが期待するキー名
       fileName
     });
