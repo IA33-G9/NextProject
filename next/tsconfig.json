@@ -16,7 +16,7 @@
     "typeRoots": ["./node_modules/@types", "./types",
       "./src/types/next-auth.d.ts"
     ],
-    "types": ["next-auth"],
+    "types": ["next-auth","node"],
     "plugins": [
       {
         "name": "next"
