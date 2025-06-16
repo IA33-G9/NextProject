@@ -13,13 +13,15 @@ datasource db {
 
 model User {
   id        String   @id
-  username      String?
+  username  String?
   password  String
   email     String   @unique
+  isAdmin   Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  bookings   Booking[]
+  bookings Booking[]
+
   @@map("user")
 }
 
@@ -30,7 +32,7 @@ model Cinema {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  screens   Screen[]
+  screens Screen[]
 
   @@map("cinema")
 }
@@ -42,19 +44,19 @@ enum ScreenSize {
 }
 
 model Screen {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   number    String
   size      ScreenSize
-  rows      Int      // A~Jの行数
-  columns   Int      // 列数
-  capacity  Int      // 座席数
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  rows      Int // A~Jの行数
+  columns   Int // 列数
+  capacity  Int // 座席数
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
-  cinemaId  String
-  cinema    Cinema   @relation(fields: [cinemaId], references: [id], onDelete: Cascade)
-  seats     Seat[]
-  showings  Showing[]
+  cinemaId String
+  cinema   Cinema    @relation(fields: [cinemaId], references: [id], onDelete: Cascade)
+  seats    Seat[]
+  showings Showing[]
 
   @@unique([cinemaId, number])
   @@map("screen")
@@ -62,15 +64,15 @@ model Screen {
 
 model Seat {
   id        String   @id @default(cuid())
-  row       String   // A~Jの文字列として保存
-  column    Int      // 1~20,スクリーンによる
+  row       String // A~Jの文字列として保存
+  column    Int // 1~20,スクリーンによる
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  screenId  String
-  screen    Screen   @relation(fields: [screenId], references: [id], onDelete: Cascade)
-  bookings  BookingSeat[]
+  screenId String
+  screen   Screen        @relation(fields: [screenId], references: [id], onDelete: Cascade)
+  bookings BookingSeat[]
 
   @@unique([screenId, row, column])
   @@map("seat")
@@ -86,11 +88,11 @@ model Movie {
   genre       String
   director    String
   casts       String
-  duration    Int      // 分単位
+  duration    Int // 分単位
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  showings  Showing[]
+  showings Showing[]
 
   @@map("movie")
 }
@@ -103,18 +105,18 @@ model Showing {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  screenId  String
-  screen    Screen   @relation(fields: [screenId], references: [id], onDelete: Cascade)
-  movieId   String
-  movie     Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
-  bookings  Booking[]
+  screenId String
+  screen   Screen    @relation(fields: [screenId], references: [id], onDelete: Cascade)
+  movieId  String
+  movie    Movie     @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  bookings Booking[]
 
   @@unique([screenId, startTime])
   @@map("showing")
 }
 
 enum BookingStatus {
-  PENDING   // 予約中
+  PENDING // 予約中
   CONFIRMED // 確認済み
   CANCELLED // キャンセル
   COMPLETED // 予約完了
@@ -127,20 +129,20 @@ enum PaymentMethod {
 }
 
 model Booking {
-  id              String        @id @default(cuid())
-  bookingDate     DateTime      @default(now())
-  totalPrice      Int
-  status          BookingStatus @default(PENDING)
-  bookingReference String       @unique
-  paymentMethod   PaymentMethod?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id               String         @id @default(cuid())
+  bookingDate      DateTime       @default(now())
+  totalPrice       Int
+  status           BookingStatus  @default(PENDING)
+  bookingReference String         @unique
+  paymentMethod    PaymentMethod?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 
-  userId          String
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  showingId       String
-  showing         Showing       @relation(fields: [showingId], references: [id], onDelete: Cascade)
-  seats           BookingSeat[]
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  showingId String
+  showing   Showing       @relation(fields: [showingId], references: [id], onDelete: Cascade)
+  seats     BookingSeat[]
 
   @@map("booking")
 }
@@ -151,9 +153,9 @@ model BookingSeat {
   createdAt DateTime @default(now())
 
   bookingId String
-  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   seatId    String
-  seat      Seat     @relation(fields: [seatId], references: [id], onDelete: Cascade)
+  seat      Seat    @relation(fields: [seatId], references: [id], onDelete: Cascade)
 
   @@unique([bookingId, seatId])
   @@map("booking_seat")
