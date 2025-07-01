@@ -11,8 +11,7 @@ export async function GET(
   try {
     const { id } = await params;
 
-    // 明示的な検証
-    if (!id || typeof id !== 'string') {
+    if (!id) {
       return NextResponse.json({ message: 'Invalid booking ID format' }, { status: 400 });
     }
 

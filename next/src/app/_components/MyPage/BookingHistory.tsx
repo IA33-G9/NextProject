@@ -1,5 +1,4 @@
 // 予約履歴コンポーネント
-import { useState } from "react";
 import Link from "next/link";
 // 予約履歴の型定義
 export interface BookingHistory {
