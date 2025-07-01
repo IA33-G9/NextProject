@@ -12,6 +12,7 @@ export default function ClientSession() {
       {session ? (
         <div>
           <p>ログイン中: {session.user?.email}</p>
+          <p>{session.user?.name}</p>
           <SignOut/>
         </div>
       ) : (

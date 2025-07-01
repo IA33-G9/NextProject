@@ -28,12 +28,18 @@ export async function GET(
             screen: true,
           }
         },
-        seats: {
-          include: {
-            seat: true,
+        seats:{
+          include:{
+            seat: {
+                select: {
+                    id: true,
+                    row: true,
+                    column: true,
+                }
+            },
+            }
           }
-        },
-      },
+        }
     });
 
     if (!booking) {
@@ -41,24 +47,32 @@ export async function GET(
     }
 
 
-    // 座席情報をフォーマット
+    //座席情報をフォーマット
     const seatLabels = booking.seats.map(bookingSeat =>
       `${bookingSeat.seat.row}${bookingSeat.seat.column}`
     ).sort();
+    const seatId = booking.seats.map(bookingSeat =>
+      `${bookingSeat.seat.id}`
+    ).sort();
 
     // レスポンス用のデータをフォーマット
-    const formattebookingDetails = {
+    const formattedBookingDetails = {
       id: booking.id,
       bookingReference: booking.bookingReference,
       title: booking.showing.movie.title,
       screen: booking.showing.screen.number || `スクリーン${booking.showing.screen.number}`,
+      screenId: booking.showing.screen.id,
+      screenSize: booking.showing.screen.size || '不明',
       startTime: booking.showing.startTime.toISOString(),
       seats: seatLabels,
-      totalAmount: booking.totalPrice,
+      seatId: seatId,
+      totalPrice: booking.totalPrice,
       status: booking.status,
+      showingId: booking.showing.id,
     };
 
-    return NextResponse.json(formattebookingDetails);
+    return NextResponse.json(formattedBookingDetails);
+    // return NextResponse.json(booking);
   } catch (error) {
     return NextResponse.json({
       message: 'Internal Server Error',error}, { status: 500 });

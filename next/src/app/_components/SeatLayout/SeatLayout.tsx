@@ -130,14 +130,15 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
 
   // 座席選択の処理
   const handleSeatClick = (seat: Seat) => {
+    // onSeatSelectがない場合は何もしない
+    if (!onSeatSelect) return;
+
     if (!seat.isActive || seat.isBooked) return;
 
     const newSelectedState = !seat.isSelected;
 
     // onSeatSelectコールバックを呼び出し、row（文字列）とcolumn（数値）を渡す
-    if (onSeatSelect) {
-      onSeatSelect(seat.id, newSelectedState, seat.row, seat.column);
-    }
+    onSeatSelect(seat.id, newSelectedState, seat.row, seat.column);
 
     const newSeats = seats.map((s) => {
       if (s.id === seat.id) {
@@ -147,6 +148,11 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
     });
 
     setSeats(newSeats);
+  };
+
+  // 座席が選択可能かどうかを判定
+  const isSeatSelectable = (seat: Seat) => {
+    return onSeatSelect && seat.isActive && !seat.isBooked;
   };
 
   // 行ごとに座席をグループ化
@@ -186,10 +192,11 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
                       w-8 h-8 text-xs rounded flex items-center justify-center
                       ${!seat.isActive ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 
                         seat.isBooked ? 'bg-red-500 text-white cursor-not-allowed' : 
-                        seat.isSelected ? 'bg-green-500 text-white' : 'bg-blue-100 hover:bg-blue-200'}
+                        seat.isSelected ? 'bg-green-500 text-white' : 
+                        isSeatSelectable(seat) ? 'bg-blue-100 hover:bg-blue-200 cursor-pointer' : 'bg-blue-100 cursor-default'}
                     `}
                     onClick={() => handleSeatClick(seat)}
-                    disabled={!seat.isActive || seat.isBooked}
+                    disabled={!isSeatSelectable(seat)}
                     title={`${seat.row}${seat.column}`}
                   >
                     {seat.column}
@@ -201,6 +208,7 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
       </div>
 
       {/* 凡例 */}
+      {onSeatSelect && (
       <div className="mt-8 flex justify-center gap-4">
         <div className="flex items-center">
           <div className="w-4 h-4 bg-blue-100 mr-2"></div>
@@ -219,6 +227,8 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
           <span className="text-sm">使用不可</span>
         </div>
       </div>
+      )}
+
     </div>
   );
 };
