@@ -11,7 +11,7 @@ interface BookingDetails {
     screenName: string;
     startTime: string;
     seats: string[];
-    totalAmount: number;
+    totalPrice: number;
     status: string;
 }
 
@@ -152,7 +152,7 @@ export default function BookingConfirmPage() {
                 <h2>お支払い</h2>
                 <div>
                     <span>合計金額</span>
-                    <span>¥{booking.totalAmount.toLocaleString()}</span>
+                    <span>¥{booking.totalPrice.toLocaleString()}</span>
                 </div>
             </div>
 

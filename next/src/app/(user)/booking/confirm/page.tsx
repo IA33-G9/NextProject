@@ -35,7 +35,7 @@ interface BookingDetails {
   screenName: string;
   startTime: string;
   seats: string[];
-  totalAmount: number;
+  totalPrice: number;
   status: string;
 }
 
@@ -170,7 +170,7 @@ export default function BookingConfirmPage() {
   const screenName = booking?.screenName || showing?.screen.number || '';
   const startTime = booking?.startTime || showing?.startTime || '';
   const seats = booking?.seats.length ? booking.seats : seatIds;
-  const totalPrice = booking?.totalAmount || (seats.length * (showing?.price || 0));
+  const totalPrice = booking?.totalPrice || (seats.length * (showing?.price || 0));
 
   const formattedDate = new Date(startTime).toLocaleString('ja-JP', {
     year: 'numeric',
