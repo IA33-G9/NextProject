@@ -1,5 +1,6 @@
 // 予約履歴コンポーネント
 import Link from "next/link";
+import Image from "next/image";
 // 予約履歴の型定義
 export interface BookingHistory {
   id: string;
@@ -15,6 +16,7 @@ export interface BookingHistory {
     endTime: string;
     movie: {
       title: string;
+      imageUrl: string;
     };
     screen: {
       number: string;
@@ -90,6 +92,13 @@ const BookingHistoryComponent = ({ bookings }: { bookings: BookingHistory[]}) =>
                         </span>
                       </div>
                       <div className="flex items-center space-x-4 text-sm text-gray-600">
+                        <span>
+                          <Image
+                              src={booking.showing.movie.imageUrl}
+                              alt={booking.showing.movie.title}
+                              width={50}
+                              height={50}/>
+                        </span>
                         <span>🏛️ スクリーン{booking.showing.screen.number}</span>
                         <span>📽️ {booking.showing.movie.title}</span>
                         <span>

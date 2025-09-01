@@ -64,11 +64,6 @@ const ProfileComponent = ({ profile }: { profile: UserProfile | null }) => {
           </div>
 
           <div className="p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">📱 電話番号</h3>
-            <p className="text-gray-900">{profile.phone}</p>
-          </div>
-
-          <div className="p-4 bg-gray-50 rounded-lg">
             <h3 className="text-sm font-medium text-gray-600 mb-2">📅 入会日</h3>
             <p className="text-gray-900">{formatDate(profile.joinDate)}</p>
           </div>
