@@ -30,10 +30,10 @@ type Showings = {
     };
 }
 
-export default  function BookingPage(){
+export default function BookingPage() {
     const params = useParams();
     const router = useRouter();
-    const showingId  = params.id as string;
+    const showingId = params.id as string;
 
     const [selectedSeats, setSelectedSeats] = useState<Array<{ id: string; label: string }>>([]);
     const [showing, setShowing] = useState<Showings | null>(null);
@@ -66,89 +66,116 @@ export default  function BookingPage(){
     }, [showingId]);
 
     const handleSeatSelect = (seatId: string, isSelected: boolean, row: string, column: number) => {
-      const seatLabel = `${row}${column}`;
-
-      if (isSelected) {
-        setSelectedSeats((prev) => [...prev, { id: seatId, label: seatLabel }]);
-      } else {
-        setSelectedSeats((prev) => prev.filter(seat => seat.id !== seatId));
-      }
+        const seatLabel = `${row}${column}`;
+        if (isSelected) {
+            setSelectedSeats((prev) => [...prev, { id: seatId, label: seatLabel }]);
+        } else {
+            setSelectedSeats((prev) => prev.filter(seat => seat.id !== seatId));
+        }
     };
-
-
 
     const handleGoToConfirm = () => {
-      if (selectedSeats.length === 0) {
-        alert('座席を選択してください');
-        return;
-      }
+        if (selectedSeats.length === 0) {
+            alert('座席を選択してください');
+            return;
+        }
 
-      // URLクエリで渡す
-      const seatQuery = selectedSeats.map(seat => seat.id).join(',');
-      router.push(`/booking/confirm?showingId=${showingId}&seats=${seatQuery}`);
+        const seatQuery = selectedSeats.map(seat => seat.id).join(',');
+        router.push(`/booking/confirm?showingId=${showingId}&seats=${seatQuery}`);
     };
 
-    if (loading) return <div>読み込み中...</div>;
-    if (error) return <div>{error}</div>;
-    if (!showing) return <div>上映情報が見つかりません</div>;
+    if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-xl text-gray-700">読み込み中...</div>
+    </div>;
 
+    if (error) return <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-xl text-red-500">{error}</div>
+    </div>;
+
+    if (!showing) return <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-xl text-gray-700">上映情報が見つかりません</div>
+    </div>;
 
     return (
-    <div className="container mx-auto p-4 md:p-6">
-        <div>
-            <Link href="/movie">
-            ＜上映スケジュールに戻る
-            </Link>
-        </div>
-        <div>
-            <h1>{showing.title}</h1>
-
-            <div>
-                <div>
-                    <h2>上映情報</h2>
-                    <p>タイトル: {showing.movie.title}</p>
-                    <p>上映日時: {new Date(showing.startTime).toLocaleString('ja-JP')}</p>
-                    <p>上映時間: {showing.movie.duration}</p>
-                    <p>シネマ: {showing.screen.cinema.name}</p>
-                    <p>スクリーン: {showing.screen.number}</p>
-                    <p>料金: {showing.price.toLocaleString()}円 (1席あたり)</p>
+        <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+            <div className="container mx-auto max-w-5xl bg-white shadow-lg border border-gray-300 rounded-lg overflow-hidden">
+                {/* Header */}
+                <div className="header bg-white p-4 md:p-6 text-center border-b-2 border-gray-200 relative">
+                    <Link href="/movie" className="top-button absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-blue-600 transition-colors font-medium text-sm md:text-base no-underline">
+                        ＜ 上映スケジュールに戻る
+                    </Link>
+                    <div className="logo text-2xl md:text-3xl font-bold text-gray-900">
+                        HAL CINEMAS
+                    </div>
                 </div>
 
-                <div>
-                    <h2>予約情報</h2>
-                    <p>選択座席数: {selectedSeats.length}席</p>
-                    <p>選択座席: {selectedSeats.map(seat => seat.label).join(", ") || '未選択'}</p>
-                    <p>合計金額: {(selectedSeats.length * showing.price).toLocaleString()}円</p>
+                <div className="p-4 md:p-8">
+                    <h1 className="text-3xl md:text-4xl font-bold text-gray-900 text-center mb-6">
+                        チケット予約
+                    </h1>
 
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+                        {/* Movie Info Card */}
+                        <div className="bg-white rounded-lg shadow-sm border p-5">
+                            <h2 className="text-xl md:text-2xl font-semibold text-gray-900 mb-4">上映情報</h2>
+                            <ul className="text-gray-700 space-y-2">
+                                <li><strong>タイトル:</strong> {showing.movie.title}</li>
+                                <li><strong>上映日時:</strong> {new Date(showing.startTime).toLocaleString('ja-JP')}</li>
+                                <li><strong>上映時間:</strong> {showing.movie.duration}分</li>
+                                <li><strong>シネマ:</strong> {showing.screen.cinema.name}</li>
+                                <li><strong>スクリーン:</strong> {showing.screen.number}</li>
+                                <li><strong>料金:</strong> {showing.price.toLocaleString()}円 (1席あたり)</li>
+                            </ul>
+                        </div>
+
+                        {/* Booking Summary Card */}
+                        <div className="bg-white rounded-lg shadow-sm border p-5">
+                            <h2 className="text-xl md:text-2xl font-semibold text-gray-900 mb-4">予約情報</h2>
+                            <ul className="text-gray-700 space-y-2">
+                                <li><strong>選択座席数:</strong> <span className="text-blue-600 font-bold">{selectedSeats.length}席</span></li>
+                                <li>
+                                    <strong>選択座席:</strong>
+                                    <span className="text-blue-600"> {selectedSeats.map(seat => seat.label).join(", ") || '未選択'}</span>
+                                </li>
+                                <li>
+                                    <strong>合計金額:</strong>
+                                    <span className="text-blue-600 font-bold"> {(selectedSeats.length * showing.price).toLocaleString()}円</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    {/* Seat Selection Section */}
+                    <div className="bg-white rounded-lg shadow-sm border p-5 mt-6">
+                        <h2 className="text-xl md:text-2xl font-semibold text-gray-900 mb-6 text-center">座席を選択してください</h2>
+                        <div className="flex justify-center items-center p-4">
+                            <SeatLayout
+                                screenSize={showing.screenSize}
+                                screenId={showing.screenId}
+                                showingId={showing.id as string}
+                                onSeatSelect={handleSeatSelect}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Booking Button */}
+                <div className="p-6 border-t border-gray-200 bg-gray-100 flex justify-center">
+                    <button
+                        onClick={handleGoToConfirm}
+                        disabled={selectedSeats.length === 0}
+                        className={`px-8 py-4 rounded-lg font-bold text-lg text-white w-full md:w-auto transition-colors duration-200
+                        ${selectedSeats.length === 0
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : 'bg-red-500 hover:bg-red-600'}`
+                        }
+                    >
+                        {selectedSeats.length > 0
+                            ? `${selectedSeats.length}席を予約する (${(selectedSeats.length * showing.price).toLocaleString()}円)`
+                            : '座席を選択してください'}
+                    </button>
                 </div>
             </div>
-
-            <div>
-                <h2>座席を選択してください</h2>
-                <SeatLayout
-                screenSize={showing.screenSize}
-                screenId={showing.screenId}
-                showingId={showing.id as string}
-                onSeatSelect={handleSeatSelect}
-                />
-            </div>
-
-            <div>
-                <button
-                    onClick={handleGoToConfirm}
-                    disabled={selectedSeats.length === 0}
-                    className={`px-6 py-3 rounded-lg font-bold text-white
-                    ${selectedSeats.length === 0
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-blue-600 hover:bg-blue-700'}`}
-                >
-                    {selectedSeats.length > 0
-                        ? `${selectedSeats.length}席を予約する`
-                        : '座席を選択してください'}
-                </button>
-
-            </div>
         </div>
-    </div>
     );
 }

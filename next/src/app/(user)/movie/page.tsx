@@ -53,7 +53,7 @@ export default function MoviesPage() {
 
   return (
     <div>
-      <h1>上映中映画</h1>
+      <h1></h1>
       <MovieFilter Movies={movies} />
     </div>
   );

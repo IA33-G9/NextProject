@@ -30,7 +30,7 @@ type Showing = {
 
 interface BookingDetails {
   bookingId: string;
-  bookingReference: string; // これは使わないので表示しない
+  bookingReference: string;
   title: string;
   screenName: string;
   startTime: string;
@@ -50,14 +50,11 @@ export default function BookingConfirmPage() {
   const router = useRouter();
   const params = useParams();
 
-  // クエリから上映IDと座席ID取得
   const showingId = searchParams.get('showingId');
   const seatIds = searchParams.get('seats')?.split(',') || [];
 
-  // URLパラメータから予約IDを取得（予約完了時用）
   const bookingId = params.id as string | undefined;
 
-  // 状態管理
   const [showing, setShowing] = useState<Showing | null>(null);
   const [booking, setBooking] = useState<BookingDetails | null>(null);
   const [seatsInfo, setSeatsInfo] = useState<Seat[]>([]);
@@ -68,7 +65,6 @@ export default function BookingConfirmPage() {
   const [errorBooking, setErrorBooking] = useState<string | null>(null);
   const [errorSeats, setErrorSeats] = useState<string | null>(null);
 
-  // 上映情報を取得
   useEffect(() => {
     if (!showingId) {
       setErrorShowing('上映IDが指定されていません');
@@ -92,7 +88,6 @@ export default function BookingConfirmPage() {
     fetchShowing();
   }, [showingId]);
 
-  // 予約詳細を取得（予約IDがある場合のみ）
   useEffect(() => {
     if (!bookingId) {
       setLoadingBooking(false);
@@ -118,7 +113,7 @@ export default function BookingConfirmPage() {
   useEffect(() => {
     const fetchSeats = async () => {
       if (!seatIds.length || booking) {
-        setLoadingSeats(false); // 予約詳細がある場合は API 不要
+        setLoadingSeats(false);
         return;
       }
 
@@ -157,7 +152,7 @@ export default function BookingConfirmPage() {
           alert('予約に失敗しました');
       }
   };
-  // ローディング・エラー処理
+
   if (loadingShowing || loadingBooking) {
     return <div className="text-center py-20">読み込み中...</div>;
   }
@@ -165,7 +160,6 @@ export default function BookingConfirmPage() {
     return <div className="text-center text-red-600 py-20">{errorShowing}</div>;
   }
 
-  // 表示用の映画情報は予約詳細があればそちら、なければ上映情報
   const movieTitle = booking?.title || showing?.title || '';
   const screenName = booking?.screenName || showing?.screen.number || '';
   const startTime = booking?.startTime || showing?.startTime || '';
@@ -180,52 +174,198 @@ export default function BookingConfirmPage() {
     minute: '2-digit',
   });
 
+  const seatNumbers = (booking?.seats || seatsInfo.map(s => s.seatNumber)).join(', ');
+
   return (
-      <div>
-        <h1>予約確認</h1>
-
-
-        {/* 映画情報 */}
-        <div>
-          <h2>映画情報</h2>
-          <p>{movieTitle}</p>
-          <p>上映時刻 : {formattedDate}</p>
-          <p>シネマ : {showing?.screen.cinema.name}</p>
-          <p>スクリーン : {screenName}</p>
-          <p>上映時間 : {showing?.movie.duration} 分</p>
-
-        </div>
-
-        {/* 座席 */}
-        <div>
-          <h2>座席</h2>
-          <div>
-            {(booking?.seats || seatsInfo.map(s => s.seatNumber)).map((seat, i) => (
-                <span key={i}>
-                  {seat}
-                </span>
-                )
-            )}
-          </div>
-        </div>
-
-        {/* お支払い */}
-        <div>
-          <h2 >お支払い</h2>
-          <div>
-            <span>合計金額</span>
-            <span>¥{totalPrice.toLocaleString()}</span>
-          </div>
-        </div>
-
-        <div>
-          <button
-              onClick={handleConfirmBooking}
-              className="px-6 py-3 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700"
-          >
-            予約を確定する
-          </button>
-        </div>
+    <div className="container">
+      <div className="header">
+        <div className="logo">HAL CINEMAS</div>
       </div>
+
+      <div className="back-button-container">
+        <button className="back-button" onClick={() => router.back()}>
+          <span className="arrow">←</span>
+          戻る
+        </button>
+      </div>
+
+      <div className="main">
+        <h2>予約確認</h2>
+
+        <div className="summary">
+          <div><span>映画タイトル</span><span>{movieTitle}</span></div>
+          <div><span>上映日時</span><span>{formattedDate}</span></div>
+          <div><span>スクリーン</span><span>{screenName}</span></div>
+        </div>
+
+        <label htmlFor="seat">選択した席</label>
+        <div className="selected-seats-display">
+          <span>{seatNumbers}</span>
+        </div>
+
+        <div className="price">￥{totalPrice.toLocaleString()}円</div>
+
+        <button className="confirm-btn" onClick={handleConfirmBooking}>確定</button>
+      </div>
+
+      <style jsx>{`
+        body {
+          font-family: Arial, sans-serif;
+          margin: 0;
+          padding: 0;
+          background-color: #f5f5f5;
+        }
+        .container {
+          max-width: 1920px;
+          width: 100%;
+          margin: 0 auto;
+          background-color: white;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 1920px) {
+          .container {
+            max-width: 1536px;
+          }
+        }
+        .header {
+          padding: 10px 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 4px solid black;
+        }
+        .logo {
+          font-size: 28px;
+          color: #000;
+          font-family: 'Luckiest Guy', cursive;
+        }
+
+        .back-button-container {
+            padding: 20px 0;
+            border-bottom: 1px solid #ddd;
+            position: relative;
+        }
+
+        .back-button {
+          position: absolute;
+          left: 20px;
+          top: 50%;
+          transform: translateY(-50%);
+          background-color: #6c757d;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          padding: 8px 16px;
+          font-size: 14px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          transition: background-color 0.2s ease;
+        }
+
+        .back-button:hover {
+          background-color: #5a6268;
+        }
+
+        .back-button a {
+          text-decoration: none;
+          color: white;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .arrow {
+          font-size: 12px;
+        }
+
+        .main {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: start;
+          padding: 30px 20px;
+        }
+
+        h2 {
+          font-size: 32px;
+          margin-bottom: 30px;
+        }
+
+        .summary {
+          border-top: 1px solid #ccc;
+          border-bottom: 1px solid #ccc;
+          padding: 20px 0;
+          width: 400px;
+          font-size: 20px;
+          margin-bottom: 30px;
+        }
+
+        .summary div {
+          display: flex;
+          justify-content: space-between;
+          margin: 10px 0;
+        }
+
+        label {
+          display: block;
+          margin-bottom: 5px;
+          font-size: 14px;
+        }
+
+        .selected-seats-display {
+          width: 300px;
+          padding: 10px;
+          font-size: 16px;
+          margin-bottom: 40px;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          text-align: center;
+        }
+
+        .price {
+          font-size: 32px;
+          font-weight: bold;
+          margin-bottom: 40px;
+          border-bottom: 1px solid #ccc;
+          padding-bottom: 10px;
+        }
+
+        .confirm-btn {
+          background-color: red;
+          color: white;
+          font-size: 20px;
+          padding: 15px 60px;
+          border: none;
+          border-radius: 30px;
+          cursor: pointer;
+          transition: opacity 0.2s ease;
+        }
+
+        .confirm-btn:hover {
+          opacity: 0.85;
+        }
+
+        @media (max-width: 768px) {
+          .summary {
+            width: 90%;
+          }
+
+          .selected-seats-display {
+            width: 90%;
+          }
+
+          .back-button {
+            position: static;
+            transform: none;
+            margin: 10px 20px;
+            align-self: flex-start;
+          }
+        }
+      `}</style>
+    </div>
   );
 }

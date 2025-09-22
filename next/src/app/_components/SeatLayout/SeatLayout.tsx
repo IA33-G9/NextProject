@@ -171,29 +171,31 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
   if (error) return <div className="p-4 text-center text-red-500">{error}</div>;
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4">
+    <div className="w-full max-w-4xl mx-auto p-4 border border-gray-300 shadow-sm flex flex-col items-center">
       {/* スクリーン表示 */}
-      <div className="w-full bg-gray-300 h-8 flex items-center justify-center mb-8 rounded">
-        <span className="text-gray-700 font-bold">スクリーン</span>
+      <div className="relative w-full h-10 mb-6 rounded-b-full bg-gray-800 shadow-inner flex items-center justify-center overflow-hidden">
+        <span className="text-gray-300 font-bold text-lg tracking-wide">SCREEN</span>
+        <div className="absolute inset-x-0 bottom-0 h-3 bg-gray-700 opacity-50 filter blur-sm"></div>
       </div>
 
       {/* 座席レイアウト */}
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex flex-col items-center gap-5">
         {sortedRows.map((row) => (
           <div key={row} className="flex items-center w-full">
-            <div className="w-8 font-bold text-center">{row}</div>
-            <div className="flex flex-wrap gap-2 justify-center w-full">
+            <div className="w-7 font-bold text-center">{row}</div>
+            <div className="flex flex-1 gap-1.5 justify-center">
               {seatsByRow[row]
                 .sort((a, b) => a.column - b.column)
                 .map((seat) => (
                   <button
                     key={`${seat.row}${seat.column}`}
                     className={`
-                      w-8 h-8 text-xs rounded flex items-center justify-center
+                      relative w-7 h-7 text-xs rounded-t-full rounded-b-sm flex items-center justify-center
+                      border border-gray-400
                       ${!seat.isActive ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 
                         seat.isBooked ? 'bg-red-500 text-white cursor-not-allowed' : 
-                        seat.isSelected ? 'bg-green-500 text-white' : 
-                        isSeatSelectable(seat) ? 'bg-blue-100 hover:bg-blue-200 cursor-pointer' : 'bg-blue-100 cursor-default'}
+                        seat.isSelected ? 'bg-green-500 text-white border-green-700' : 
+                        'bg-white text-gray-800 hover:bg-gray-100 cursor-pointer'}
                     `}
                     onClick={() => handleSeatClick(seat)}
                     disabled={!isSeatSelectable(seat)}
@@ -209,22 +211,22 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
 
       {/* 凡例 */}
       {onSeatSelect && (
-      <div className="mt-8 flex justify-center gap-4">
+      <div className="mt-6 flex justify-center gap-3">
         <div className="flex items-center">
-          <div className="w-4 h-4 bg-blue-100 mr-2"></div>
-          <span className="text-sm">空席</span>
+          <div className="w-3.5 h-3.5 bg-white border border-gray-400 rounded-t-full rounded-b-sm mr-1.5"></div>
+          <span className="text-xs">空席</span>
         </div>
         <div className="flex items-center">
-          <div className="w-4 h-4 bg-green-500 mr-2"></div>
-          <span className="text-sm">選択中</span>
+          <div className="w-3.5 h-3.5 bg-green-500 rounded-t-full rounded-b-sm mr-1.5 border-2 border-green-700"></div>
+          <span className="text-xs">選択中</span>
         </div>
         <div className="flex items-center">
-          <div className="w-4 h-4 bg-red-500 mr-2"></div>
-          <span className="text-sm">予約済</span>
+          <div className="w-3.5 h-3.5 bg-red-500 rounded-t-full rounded-b-sm mr-1.5"></div>
+          <span className="text-xs">予約済</span>
         </div>
         <div className="flex items-center">
-          <div className="w-4 h-4 bg-gray-200 mr-2"></div>
-          <span className="text-sm">使用不可</span>
+          <div className="w-3.5 h-3.5 bg-gray-200 rounded-t-full rounded-b-sm mr-1.5"></div>
+          <span className="text-xs">使用不可</span>
         </div>
       </div>
       )}
