@@ -91,17 +91,8 @@ async function main() {
   });
   console.log(`テスト上映情報を作成しました: ${sampleshowing.id}`);
 
-  const sampleuser = await prisma.user.create({
-    data: {
-      id:"testuser",
-      username: 'testuser',
-      password: 'testpassword',
-      email: "test@test01.test",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  });
-  console.log(`テストユーザ情報を作成しました: ${sampleuser.id}`);
+  // sampleUserは削除しました。adminユーザーを作成する際は、個々でアカウントを作成し、DBでadminをTrueにしてください。
+
   console.log('シードが正常に完了しました。');
 }
 
