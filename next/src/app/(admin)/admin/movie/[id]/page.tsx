@@ -260,7 +260,7 @@ export default function MovieDetailPage({
         showings: editedMovie.showings?.map(showing => ({
           startTime: showing.startTime,
           screenId: showing.screenId,
-          price: showing.price
+          uniformPrice: showing.uniformPrice
         })) || []
       };
 
@@ -687,17 +687,21 @@ export default function MovieDetailPage({
                     <label className="block text-xs text-gray-500 mb-1">料金（円）</label>
                     <input
                         type="number"
-                        value={showing.price || 1800}
+                        value={showing.uniformPrice || ''}
                         onChange={(e) => {
                           const updated = [...(editedMovie.showings || [])];
                           updated[index] = {
                             ...updated[index],
-                            price: parseInt(e.target.value) || 1800
+                            uniformPrice: e.target.value === '' ? null : parseInt(e.target.value) || null
                           };
                           setEditedMovie(prev => prev ? {...prev, showings: updated} : prev);
                         }}
+                        placeholder="空間可"
                         className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
                     />
+                    <div className="text-xs text-gray-400 mt-1">
+                      { showing.uniformPrice ? `一律${showing.uniformPrice}円` : 'デフォルト料金体系' }
+                    </div>
                   </div>
                   <button
                       onClick={() => {
@@ -719,7 +723,7 @@ export default function MovieDetailPage({
                   const newShowing = {
                     startTime: new Date().toISOString(),
                     screenId: screens.length > 0 ? screens[0].id : '',
-                    price: 1800
+                    uniformPrice: null
                   };
                   setEditedMovie(prev => prev ? {
                     ...prev,

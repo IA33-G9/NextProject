@@ -3,22 +3,37 @@ import { useEffect, useState } from "react";
 import {useParams, useRouter} from "next/navigation";
 import BookedSeatLayout from "@/app/_components/SeatLayout/BookedSeatsLayout";
 
+interface SeatDetail {
+    seatId: string;
+    seatLabel: string;
+    ticketType: 'GENERAL' | 'STUDENT' | 'YOUTH' | 'CHILD';
+    price: number;
+    row: string;
+    column: number;
+}
+
 interface BookingDetails {
   id: string;
   bookingReference: string;
   title: string;
   screen: string;
+  screenId?: string;
+  screenSize?: 'LARGE' | 'MEDIUM' | 'SMALL';
   startTime: string;
   seats: string[];
   seatId : string[];
+  seatDetails: SeatDetail[];
   totalPrice: number;
   status: string;
-  screenId?: string;
-  screenSize?: 'LARGE' | 'MEDIUM' | 'SMALL';
   showingId: string;
 }
 
-
+const TICKET_TYPE_LABELS = {
+    GENERAL: '一般',
+    STUDENT: '大学生等',
+    YOUTH: '中学・高校生',
+    CHILD: '小学生・幼児'
+} as const;
 
 export default function BookingDetailsPage() {
   const [booking, setBooking] = useState<BookingDetails | null>(null);
@@ -234,19 +249,47 @@ export default function BookingDetailsPage() {
               </h2>
 
               <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <span className="text-sm text-gray-600">選択座席:</span>
-                  <div className="flex flex-wrap gap-2">
-                    {booking.seats.map((seat, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
-                      >
-                        {seat}
-                      </span>
-                    ))}
+                {/* 座席とチケットタイプの詳細表示 */}
+                {booking.seatDetails && booking.seatDetails.length > 0 ? (
+                  <div className="space-y-3">
+                    <h3 className="font-medium text-gray-900">予約座席詳細</h3>
+                    <div className="grid gap-3">
+                      {booking.seatDetails.map((seatDetail, index) => (
+                        <div
+                          key={seatDetail.seatId}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded font-medium text-sm">
+                              {seatDetail.seatLabel}
+                            </span>
+                            <span className="text-gray-600 text-sm">
+                              {TICKET_TYPE_LABELS[seatDetail.ticketType]}
+                            </span>
+                          </div>
+                          <span className="font-medium text-gray-900">
+                            ¥{seatDetail.price.toLocaleString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  // フォールバック表示（seatDetailsがない場合）
+                  <div className="flex items-center space-x-3">
+                    <span className="text-sm text-gray-600">選択座席:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {booking.seats.map((seat, index) => (
+                        <span
+                          key={index}
+                          className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
+                        >
+                          {seat}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-center space-x-3">
                   <span className="text-sm text-gray-600">座席数:</span>

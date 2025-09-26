@@ -98,7 +98,7 @@ export async function PUT(
                 startTime: startTime,
                 endTime: endTime,
                 screenId: screenId,
-                price: showingItem.price || 1800,
+                uniformPrice: showingItem.uniformPrice || null,
               };
             })
           );

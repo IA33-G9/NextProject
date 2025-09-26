@@ -9,21 +9,21 @@ type Showing = {
   title: string;
   startTime: string;
   endTime: string;
-  price: number;
+  uniformPrice: number | null;
   screenNumber: string;
   screenId: string;
   screenSize: ScreenSize;
   movieId: string;
     movie: {
-        title: string;
-        duration: string;
-        releaseDate: string;
+      title: string;
+      duration: string;
+      releaseDate: string;
     };
     screen: {
-        number: string;
-        cinema: {
-            name: string;
-        };
+      number: string;
+      cinema: {
+        name: string;
+      };
     };
 
 };
@@ -44,6 +44,29 @@ type Seat = {
   seatNumber: string;
 };
 
+type TicketType = 'GENERAL' | 'STUDENT' | 'YOUTH' | 'CHILD';
+
+type SeatWithTicket = {
+    seatId: string;
+    seatNumber: string;
+    ticketType: TicketType;
+};
+
+const TICKET_TYPES = {
+    GENERAL: { label: '一般', price: 1800 },
+    STUDENT: { label: '大学生等', price: 1600 },
+    YOUTH: { label: '中学・高校生', price: 1400 },
+    CHILD: { label: '小学生・幼児', price: 1000 }
+} as const;
+
+type PaymentMethod = 'CREDIT_CARD' | 'CASH' | 'MOBILE_PAYMENT';
+
+const PAYMENT_METHODS = {
+    CREDIT_CARD: { label: 'クレジットカード'},
+    CASH: { label: '現金'},
+    MOBILE_PAYMENT: { label: 'モバイル決済'},
+}
+
 
 export default function BookingConfirmPage() {
   const searchParams = useSearchParams();
@@ -58,6 +81,8 @@ export default function BookingConfirmPage() {
   const [showing, setShowing] = useState<Showing | null>(null);
   const [booking, setBooking] = useState<BookingDetails | null>(null);
   const [seatsInfo, setSeatsInfo] = useState<Seat[]>([]);
+  const [seatTickets, setSeatTickets] = useState<SeatWithTicket[]>([]);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('CREDIT_CARD');
   const [loadingSeats, setLoadingSeats] = useState(true);
   const [loadingShowing, setLoadingShowing] = useState(true);
   const [loadingBooking, setLoadingBooking] = useState(true);
@@ -123,6 +148,15 @@ export default function BookingConfirmPage() {
         if (!res.ok) throw new Error('座席情報の取得に失敗');
         const data: Seat[] = await res.json();
         setSeatsInfo(data);
+
+        // 座席にデフォルトのチケットタイプ（一般）を設定
+        const initialSeatTickets = data.map(seat => ({
+          seatId: seat.id,
+          seatNumber: seat.seatNumber,
+          ticketType: 'GENERAL' as TicketType
+        }));
+        setSeatTickets(initialSeatTickets);
+
         setErrorSeats(null);
       } catch (e) {
         setErrorSeats('座席情報の取得に失敗しました');
@@ -134,12 +168,30 @@ export default function BookingConfirmPage() {
     fetchSeats();
   }, [booking]);
 
+  const handleTicketTypeChange = (seatId: string, ticketType: TicketType) => {
+    setSeatTickets(prev =>
+      prev.map(seat =>
+        seat.seatId === seatId
+          ? { ...seat, ticketType }
+          : seat
+      )
+    );
+  };
+
   const handleConfirmBooking = async () => {
       try {
+          const bookingData = {
+              showingId,
+              seatIds,
+              paymentMethod: selectedPaymentMethod,
+              // デフォルト料金体系の場合は座席ごとのチケットタイプも送信
+              seatTickets: showing?.uniformPrice === null ? seatTickets : undefined
+          };
+
           const response = await fetch(`/api/bookings`, {
               method: 'POST',
               headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({showingId, seatIds}),
+              body: JSON.stringify(bookingData),
           });
 
           if (!response.ok) throw new Error('予約に失敗');
@@ -164,7 +216,23 @@ export default function BookingConfirmPage() {
   const screenName = booking?.screenName || showing?.screen.number || '';
   const startTime = booking?.startTime || showing?.startTime || '';
   const seats = booking?.seats.length ? booking.seats : seatIds;
-  const totalPrice = booking?.totalPrice || (seats.length * (showing?.price || 0));
+
+    // 料金計算
+  const calculateTotalPrice = () => {
+    if (booking?.totalPrice) return booking.totalPrice;
+
+    if (showing?.uniformPrice) {
+      // 一律料金の場合
+      return seats.length * showing.uniformPrice;
+    } else {
+      // デフォルト料金体系の場合
+      return seatTickets.reduce((total, seat) => {
+        return total + TICKET_TYPES[seat.ticketType].price;
+      }, 0);
+    }
+  };
+
+  const totalPrice = calculateTotalPrice();
 
   const formattedDate = new Date(startTime).toLocaleString('ja-JP', {
     year: 'numeric',
@@ -203,12 +271,79 @@ export default function BookingConfirmPage() {
           <span>{seatNumbers}</span>
         </div>
 
+        {/* チケットタイプ選択（デフォルト料金体系の場合のみ表示） */}
+        {!booking && showing?.uniformPrice === null && seatTickets.length > 0 && (
+          <div className="ticket-selection">
+            <h3>チケットタイプを選択してください</h3>
+            <div className="seat-ticket-list">
+              {seatTickets.map((seatTicket) => (
+                <div key={seatTicket.seatId} className="seat-ticket-row">
+                  <div className="seat-info">
+                    <strong>{seatTicket.seatNumber}</strong>
+                  </div>
+                  <select
+                    value={seatTicket.ticketType}
+                    onChange={(e) => handleTicketTypeChange(seatTicket.seatId, e.target.value as TicketType)}
+                    className="ticket-select"
+                  >
+                    {Object.entries(TICKET_TYPES).map(([key, type]) => (
+                      <option key={key} value={key}>
+                        {type.label} - ¥{type.price.toLocaleString()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 料金内訳（デフォルト料金体系の場合） */}
+        {!booking && showing?.uniformPrice === null && seatTickets.length > 0 && (
+          <div className="price-breakdown">
+            <h4>料金内訳</h4>
+            <div className="breakdown-list">
+              {seatTickets.map((seatTicket) => (
+                <div key={seatTicket.seatId} className="breakdown-row">
+                  <span>{seatTicket.seatNumber} ({TICKET_TYPES[seatTicket.ticketType].label})</span>
+                  <span>¥{TICKET_TYPES[seatTicket.ticketType].price.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 支払方法選択 */}
+        {!booking && (
+          <div className="payment-selection">
+            <h3>支払方法を選択してください</h3>
+            <div className="payment-methods">
+              {Object.entries(PAYMENT_METHODS).map(([key, method]) => (
+                <label key={key} className="payment-method">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value={key}
+                    checked={selectedPaymentMethod === key}
+                    onChange={(e) => setSelectedPaymentMethod(e.target.value as PaymentMethod)}
+                    className="payment-radio"
+                  />
+                  <div className="payment-card">
+                    <span className="payment-label">{method.label}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="price">￥{totalPrice.toLocaleString()}円</div>
 
         <button className="confirm-btn" onClick={handleConfirmBooking}>確定</button>
       </div>
 
-      <style jsx>{`
+    <style jsx>
+      {`
         body {
           font-family: Arial, sans-serif;
           margin: 0;
@@ -216,7 +351,7 @@ export default function BookingConfirmPage() {
           background-color: #f5f5f5;
         }
         .container {
-          max-width: 1920px;
+        max-width: 1920px;
           width: 100%;
           margin: 0 auto;
           background-color: white;
@@ -242,9 +377,9 @@ export default function BookingConfirmPage() {
         }
 
         .back-button-container {
-            padding: 20px 0;
-            border-bottom: 1px solid #ddd;
-            position: relative;
+          padding: 20px 0;
+          border-bottom: 1px solid #ddd;
+          position: relative;
         }
 
         .back-button {
@@ -267,14 +402,6 @@ export default function BookingConfirmPage() {
 
         .back-button:hover {
           background-color: #5a6268;
-        }
-
-        .back-button a {
-          text-decoration: none;
-          color: white;
-          display: flex;
-          align-items: center;
-          gap: 6px;
         }
 
         .arrow {
@@ -320,16 +447,149 @@ export default function BookingConfirmPage() {
           width: 300px;
           padding: 10px;
           font-size: 16px;
-          margin-bottom: 40px;
+          margin-bottom: 20px;
           border: 1px solid #ccc;
           border-radius: 4px;
           text-align: center;
         }
 
+        .ticket-selection {
+          width: 500px;
+          margin: 20px 0;
+          padding: 20px;
+          border: 2px solid #007bff;
+          border-radius: 8px;
+          background-color: #f8f9fa;
+        }
+
+        .ticket-selection h3 {
+          margin: 0 0 15px 0;
+          font-size: 18px;
+          color: #333;
+          text-align: center;
+        }
+
+        .seat-ticket-list {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .seat-ticket-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 10px;
+          background-color: white;
+          border-radius: 4px;
+          border: 1px solid #ddd;
+        }
+
+        .seat-info {
+          font-size: 16px;
+          min-width: 60px;
+        }
+
+        .ticket-select {
+          padding: 8px 12px;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          font-size: 14px;
+          min-width: 200px;
+        }
+
+        .price-breakdown {
+          width: 400px;
+          margin: 20px 0;
+          padding: 15px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          background-color: #f9f9f9;
+        }
+
+        .price-breakdown h4 {
+          margin: 0 0 10px 0;
+          font-size: 16px;
+          text-align: center;
+        }
+
+        .breakdown-list {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+        }
+
+        .breakdown-row {
+          display: flex;
+          justify-content: space-between;
+          padding: 5px 0;
+          font-size: 14px;
+        }
+
+        /* 支払方法選択のスタイル */
+        .payment-selection {
+          width: 500px;
+          margin: 20px 0;
+          padding: 20px;
+          border: 2px solid #28a745;
+          border-radius: 8px;
+          background-color: #f8fff9;
+        }
+
+        .payment-selection h3 {
+          margin: 0 0 15px 0;
+          font-size: 18px;
+          color: #333;
+          text-align: center;
+        }
+
+        .payment-methods {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .payment-method {
+          cursor: pointer;
+          display: block;
+        }
+
+        .payment-radio {
+          display: none;
+        }
+
+        .payment-card {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          padding: 15px 20px;
+          border: 2px solid #ddd;
+          border-radius: 8px;
+          background-color: white;
+          transition: all 0.3s ease;
+        }
+
+        .payment-method:hover .payment-card {
+          border-color: #28a745;
+          box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+        }
+
+        .payment-radio:checked + .payment-card {
+          border-color: #28a745;
+          background-color: #f8fff9;
+          box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        .payment-label {
+          font-size: 16px;
+          font-weight: 500;
+          color: #333;
+        }
+
         .price {
           font-size: 32px;
           font-weight: bold;
-          margin-bottom: 40px;
+          margin: 20px 0;
           border-bottom: 1px solid #ccc;
           padding-bottom: 10px;
         }
@@ -346,7 +606,7 @@ export default function BookingConfirmPage() {
         }
 
         .confirm-btn:hover {
-          opacity: 0.85;
+            opacity: 0.85;
         }
 
         @media (max-width: 768px) {
@@ -358,6 +618,14 @@ export default function BookingConfirmPage() {
             width: 90%;
           }
 
+          .ticket-selection {
+            width: 90%;
+          }
+
+          .price-breakdown {
+            width: 90%;
+          }
+
           .back-button {
             position: static;
             transform: none;
@@ -365,7 +633,8 @@ export default function BookingConfirmPage() {
             align-self: flex-start;
           }
         }
-      `}</style>
+      `}
+    </style>
     </div>
   );
 }

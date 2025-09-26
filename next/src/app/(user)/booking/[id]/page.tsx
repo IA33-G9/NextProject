@@ -12,7 +12,7 @@ type Showings = {
     title  : string;
     startTime: string;
     endTime : string;
-    price   : number;
+    uniformPrice: number;
     screenNumber: string;
     screenId : string;
     screenSize: ScreenSize;
@@ -124,7 +124,13 @@ export default function BookingPage() {
                                 <li><strong>上映時間:</strong> {showing.movie.duration}分</li>
                                 <li><strong>シネマ:</strong> {showing.screen.cinema.name}</li>
                                 <li><strong>スクリーン:</strong> {showing.screen.number}</li>
-                                <li><strong>料金:</strong> {showing.price.toLocaleString()}円 (1席あたり)</li>
+                                <li>
+                                    <strong>料金:</strong>
+                                    {showing.uniformPrice ?
+                                        `${showing.uniformPrice.toLocaleString()}円 (1席あたり)` :
+                                        'デフォルト料金体系(次のページで区分選択します)'
+                                    }
+                                </li>
                             </ul>
                         </div>
 
@@ -138,8 +144,8 @@ export default function BookingPage() {
                                     <span className="text-blue-600"> {selectedSeats.map(seat => seat.label).join(", ") || '未選択'}</span>
                                 </li>
                                 <li>
-                                    <strong>合計金額:</strong>
-                                    <span className="text-blue-600 font-bold"> {(selectedSeats.length * showing.price).toLocaleString()}円</span>
+                                    <strong>合計金額(一般料金の場合):</strong>
+                                    <span className="text-blue-600 font-bold">{(selectedSeats.length * (showing.uniformPrice || 1800)).toLocaleString()}円</span>
                                 </li>
                             </ul>
                         </div>
@@ -171,7 +177,7 @@ export default function BookingPage() {
                         }
                     >
                         {selectedSeats.length > 0
-                            ? `${selectedSeats.length}席を予約する (${(selectedSeats.length * showing.price).toLocaleString()}円)`
+                            ? `${selectedSeats.length}席を予約する (${(selectedSeats.length * (showing.uniformPrice || 1800)).toLocaleString()}円)`
                             : '座席を選択してください'}
                     </button>
                 </div>

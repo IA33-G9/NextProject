@@ -30,11 +30,11 @@ export async function GET(
         seats:{
           include:{
             seat: {
-                select: {
-                    id: true,
-                    row: true,
-                    column: true,
-                }
+              select: {
+                id: true,
+                row: true,
+                column: true,
+              }
             },
             }
           }
@@ -47,12 +47,20 @@ export async function GET(
 
 
     //座席情報をフォーマット
-    const seatLabels = booking.seats.map(bookingSeat =>
-      `${bookingSeat.seat.row}${bookingSeat.seat.column}`
-    ).sort();
-    const seatId = booking.seats.map(bookingSeat =>
-      `${bookingSeat.seat.id}`
-    ).sort();
+    const seatDetails = booking.seats.map(bookingSeat => ({
+      seatId: bookingSeat.seat.id,
+      seatLabel: `${bookingSeat.seat.row}${bookingSeat.seat.column}`,
+      ticketType: bookingSeat.ticketType,
+      price: bookingSeat.price,
+      row: bookingSeat.seat.row,
+      column: bookingSeat.seat.column,
+    })).sort((a, b) => {
+      if (a.row !== b.row) return a.row.localeCompare(b.row);
+      return a.column - b.column;
+    });
+
+    const seatLabels = seatDetails.map(seat => seat.seatLabel);
+    const seatIds = seatDetails.map(seat => seat.seatId);
 
     // レスポンス用のデータをフォーマット
     const formattedBookingDetails = {
@@ -64,7 +72,8 @@ export async function GET(
       screenSize: booking.showing.screen.size || '不明',
       startTime: booking.showing.startTime.toISOString(),
       seats: seatLabels,
-      seatId: seatId,
+      seatId: seatIds,
+      seatDetails: seatDetails,
       totalPrice: booking.totalPrice,
       status: booking.status,
       showingId: booking.showing.id,

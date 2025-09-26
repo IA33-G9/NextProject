@@ -20,7 +20,7 @@ const initialMovieData = {
 // 上映時間の初期データ
 const initialShowingData = {
   startTime: '',
-  price: 1800,
+  uniformPrice: null,
   screenId: '',
   duration: 0
 };
@@ -29,7 +29,7 @@ export default function AddMoviePage() {
   const [movieData, setMovieData] = useState(initialMovieData);
   const [showings, setShowings] = useState<Array<{
     startTime: string;
-    price: number;
+    uniformPrice: number | null;
     screenId: string;
   }>>([]);
   const [newShowing, setNewShowing] = useState(initialShowingData);
@@ -137,7 +137,7 @@ export default function AddMoviePage() {
     const { name, value } = e.target;
     setNewShowing({
       ...newShowing,
-      [name]: name === 'price' ? parseInt(value) || 0 : value
+      [name]: name === 'uniformPrice' ? (value === '' ? null : parseInt(value) || 0) : value
     });
   };
 
@@ -211,7 +211,7 @@ export default function AddMoviePage() {
         imageUrl: finalImageUrl,
         showings: showings.map(showing => ({
           startTime: showing.startTime,
-          price: showing.price,
+          uniformPrice: showing.uniformPrice,
           screenId: showing.screenId,
           // 終了時間を計算
           endTime: new Date(new Date(showing.startTime).getTime() + movieData.duration * 60 * 1000).toISOString()
@@ -467,16 +467,23 @@ export default function AddMoviePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">料金（円） <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                  一律料金（円）
+              <span className="text-xs text-gray-500 ml-2">※空欄の場合はデフォルト料金体系</span>
+              </label>
               <input
                 type="number"
-                name="price"
-                value={newShowing.price}
+                name="uniformPrice"
+                value={newShowing.uniformPrice || ''}
                 onChange={handleShowingInputChange}
                 min="0"
                 step="100"
+                placeholder="例: 1000（空欄可）"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                空欄の場合: 一般1800円/大学生1600円/中高生1400円/小学生・幼児1000円
+              </p>
             </div>
           </div>
 
@@ -530,7 +537,15 @@ export default function AddMoviePage() {
                             {endTime.toLocaleString('ja-JP')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {showing.price.toLocaleString()}円
+                            {showing.uniformPrice ? (
+                              <span className="text-blue-600 font-medium">
+                              一律 {showing.uniformPrice.toLocaleString()}円
+                            </span>
+                            ) : (
+                              <span className="text-gray-600">
+                              デフォルト料金体系
+                            </span>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button

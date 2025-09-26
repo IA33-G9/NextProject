@@ -17,7 +17,7 @@ export async function GET(
             id: true,
             startTime: true,
             endTime: true,
-            price: true,
+            uniformPrice: true,
             movieId: true,
             screenId: true,
             movie: {
