@@ -24,8 +24,19 @@ interface BookingDetails {
   seatId : string[];
   seatDetails: SeatDetail[];
   totalPrice: number;
+  payMethod: 'CREDIT_CARD' | 'CASH' | 'MOBILE_PAYMENT';
   status: string;
   showingId: string;
+}
+
+
+interface QRCodeResponse {
+  qrCode: string;
+  bookingReference: string;
+  movieTitle: string;
+  startTime: string;
+  seats: string[];
+  expiresAt: string;
 }
 
 const TICKET_TYPE_LABELS = {
@@ -35,12 +46,23 @@ const TICKET_TYPE_LABELS = {
     CHILD: '小学生・幼児'
 } as const;
 
+const PAYMETHOD_TYPE_LABELS = {
+    CREDIT_CARD: 'クレジットカード',
+    CASH: '現金支払い',
+    MOBILE_PAYMENT: 'モバイル決済',
+} as const;
+
 export default function BookingDetailsPage() {
   const [booking, setBooking] = useState<BookingDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const params = useParams();
+
+  const [showQRCode, setShowQRCode] = useState(false);
+  const [qrData, setQrData] = useState<QRCodeResponse | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrError, setQrError] = useState<string | null>(null);
 
     // bookingIdをURLパラメータから取得
   const bookingId = params.id as string;
@@ -73,6 +95,37 @@ export default function BookingDetailsPage() {
 
     fetchBookingDetails();
   }, [bookingId]);
+
+  const generateQRCode = async () => {
+    setQrLoading(true);
+    setQrError(null);
+
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}/qr`);
+      if (!response.ok) {
+        throw new Error('QRコードの生成に失敗しました');
+      }
+
+      const data = await response.json();
+      setQrData(data);
+      setShowQRCode(true);
+    } catch (err) {
+      setQrError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setQrLoading(false);
+    }
+  };
+
+  const downloadQRCode = () => {
+    if (!qrData) return;
+
+    const link = document.createElement('a');
+    link.href = qrData.qrCode;
+    link.download = `ticket-${qrData.bookingReference}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -362,6 +415,11 @@ export default function BookingDetailsPage() {
                     </span>
                   </div>
                 </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">支払方法</span>
+                  <span className="font-medium">{PAYMETHOD_TYPE_LABELS[booking.payMethod]}</span>
+                </div>
               </div>
             </div>
 
@@ -403,20 +461,37 @@ export default function BookingDetailsPage() {
               </h3>
 
               <div className="space-y-3">
-                {booking.status.toLowerCase() === 'confirmed' && (
+                {booking.status.toLowerCase() === 'completed' && (
                   <>
-                    <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
-                      QRコードを表示
-                    </button>
+                    <button
+                      onClick={generateQRCode}
+                      disabled={qrLoading}
+                      className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {qrLoading ? (
+                        <span className="flex items-center justify-center">
+                        <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                        QRコード生成中...
+                        </span>
+                      ) : (
+                        'QRコードを表示'
+                      )}
+                  </button>
 
-                    <button className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
-                      チケットをダウンロード
-                    </button>
+                  {qrError && (
+                    <div className="text-red-600 text-sm text-center">
+                      {qrError}
+                    </div>
+                  )}
+
+                  <button className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                      チケットをダウンロード（仮）
+                  </button>
                   </>
                 )}
 
                 <button className="w-full bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors">
-                  予約情報を印刷
+                  予約情報を印刷（仮）
                 </button>
 
                 {booking.status.toLowerCase() === 'confirmed' && (
@@ -429,6 +504,77 @@ export default function BookingDetailsPage() {
           </div>
         </div>
       </div>
+
+      {/* QRコード表示モーダル */}
+      {showQRCode && qrData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-90vh overflow-y-auto">
+            <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 rounded-t-lg text-center">
+              <h3 className="text-xl font-semibold mb-2">入場用QRコード</h3>
+              <p className="text-sm opacity-90">予約番号: {qrData.bookingReference}</p>
+            </div>
+
+            <div className="p-6">
+              <div className="text-center mb-6">
+                <div className="inline-block p-4 bg-white border-2 border-gray-200 rounded-lg shadow-sm">
+                  <img
+                    src={qrData.qrCode}
+                    alt="入場用QRコード"
+                    className="w-48 h-48 mx-auto"
+                  />
+                </div>
+                <p className="text-sm text-gray-600 mt-3 leading-relaxed">
+                  入場時にこのQRコードをスタッフにご提示ください
+                </p>
+              </div>
+
+                <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">映画:</span>
+                      <span className="font-medium text-right">{qrData.movieTitle}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">上映日時:</span>
+                      <span className="font-medium text-right">{formatDateTime(qrData.startTime).date}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">開始時間:</span>
+                      <span className="font-medium text-right">{formatDateTime(qrData.startTime).time}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">座席:</span>
+                      <span className="font-medium text-right">{qrData.seats.join(', ')}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex space-x-3 mb-4">
+                  <button
+                    onClick={downloadQRCode}
+                    className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    ダウンロード
+                  </button>
+                  <button
+                    onClick={() => setShowQRCode(false)}
+                    className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    閉じる
+                  </button>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
+                  <p className="text-xs text-yellow-800 mb-1">⚠️ このQRコードは他人に見せないでください</p>
+                  <p className="text-xs text-yellow-700">
+                    有効期限: {new Date(qrData.expiresAt).toLocaleString('ja-JP')}
+                  </p>
+                </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

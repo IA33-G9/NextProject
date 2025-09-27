@@ -75,6 +75,7 @@ export async function GET(
       seatId: seatIds,
       seatDetails: seatDetails,
       totalPrice: booking.totalPrice,
+    　payMethod: booking.paymentMethod,
       status: booking.status,
       showingId: booking.showing.id,
     };

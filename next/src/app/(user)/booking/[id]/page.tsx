@@ -177,7 +177,7 @@ export default function BookingPage() {
                         }
                     >
                         {selectedSeats.length > 0
-                            ? `${selectedSeats.length}席を予約する (${(selectedSeats.length * (showing.uniformPrice || 1800)).toLocaleString()}円)`
+                            ? `${selectedSeats.length}席を予約する`
                             : '座席を選択してください'}
                     </button>
                 </div>
