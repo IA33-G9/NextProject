@@ -165,30 +165,44 @@ export async function DELETE(
       );
     }
 
-    // 関連する上映スケジュールも確認
+    // 関連する上映スケジュールと予約件数を確認
     const relatedShowings = await prisma.showing.findMany({
-      where: { movieId: params.id }
+      where: { movieId: params.id },
+      include: {
+        _count: {
+          select: { bookings: true }
+        }
+      }
     });
 
-    // 上映スケジュールが存在する場合は警告または処理方針を決定
-    if (relatedShowings.length > 0) {
+    // 予約が存在するかチェック
+    const totalBookings = relatedShowings.reduce(
+      (sum, showing) => sum + showing._count.bookings,
+      0
+    );
+
+    // 予約が存在する場合は警告または処理方針を決定
+    if (totalBookings > 0) {
       // オプション1: 削除をブロックする
       return NextResponse.json(
         {
           error: 'Cannot delete movie with existing showings',
-          showingCount: relatedShowings.length
+          message: `この映画には${relatedShowings.length}件の予約が存在します`,
+          showingCount: relatedShowings.length,
+          bookingCount: totalBookings
         },
         { status: 400 }
       );
+    }
 
-      // オプション2: 関連する上映スケジュールも削除する（カスケード削除）
-      // 以下のコードをアンコメントすると、関連する上映スケジュールも削除します
-      /*
+    // 上映スケジュールが存在する場合（予約はない）
+    if (relatedShowings.length > 0) {
       await prisma.showing.deleteMany({
         where: { movieId: params.id }
       });
-      */
     }
+
+    // ここで画像が存在する場合は削除する処理を追加するかも
 
     // 映画を削除
     await prisma.movie.delete({
@@ -197,8 +211,10 @@ export async function DELETE(
 
     return NextResponse.json({
       message: 'Movie deleted successfully',
-      id: params.id
+      id: params.id,
+      deletedShowings: relatedShowings.length
     });
+
   } catch (error) {
     console.error('Error deleting movie:', error);
     return NextResponse.json(
