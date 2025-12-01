@@ -199,6 +199,36 @@ export default function MovieDetailPage({
     setOriginalImageUrl(movie?.imageUrl || null);
   };
 
+  const handleDeleteClick = async　() => {
+    if (!window.confirm(`「${movie?.title}」を削除してもよろしいですか？\nこの操作は取り消すことができません。`)) {
+        return
+    }
+
+    try {
+      const response = await fetch(`/admin/api/movies/${movieId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 400 && data.bookingCount) {
+          throw new Error(
+              `この映画には${data.bookingCount}件の予約が存在するため削除できません。\n`
+          );
+        }
+        throw new Error(data.error || '映画の削除に失敗しました');
+      }
+
+      alert('映画を削除しました。');
+      router.push('/admin/movie');
+
+    } catch (err) {
+      console.error('映画情報削除エラー:', err);
+      // エラーが発生してもアップロードは継続する
+    }
+  }
+
   const handleCancelEdit = () => {
     setIsEditing(false);
     setEditedMovie(movie);
@@ -260,7 +290,7 @@ export default function MovieDetailPage({
         showings: editedMovie.showings?.map(showing => ({
           startTime: showing.startTime,
           screenId: showing.screenId,
-          price: showing.price
+          uniformPrice: showing.uniformPrice
         })) || []
       };
 
@@ -318,11 +348,19 @@ export default function MovieDetailPage({
           </Link>
 
           <button
+            onClick={handleDeleteClick}
+            className="bg-red-400 hover:bg-red-600 text-white font-medium py-2 px-4 rounded"
+          >
+            削除する
+          </button>
+
+          <button
             onClick={handleEditClick}
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
           >
             編集する
           </button>
+
         </div>
 
         <div className="flex flex-col md:flex-row bg-white rounded-lg shadow-lg overflow-hidden">
@@ -687,17 +725,21 @@ export default function MovieDetailPage({
                     <label className="block text-xs text-gray-500 mb-1">料金（円）</label>
                     <input
                         type="number"
-                        value={showing.price || 1800}
+                        value={showing.uniformPrice || ''}
                         onChange={(e) => {
                           const updated = [...(editedMovie.showings || [])];
                           updated[index] = {
                             ...updated[index],
-                            price: parseInt(e.target.value) || 1800
+                            uniformPrice: e.target.value === '' ? null : parseInt(e.target.value) || null
                           };
                           setEditedMovie(prev => prev ? {...prev, showings: updated} : prev);
                         }}
+                        placeholder="空間可"
                         className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
                     />
+                    <div className="text-xs text-gray-400 mt-1">
+                      { showing.uniformPrice ? `一律${showing.uniformPrice}円` : 'デフォルト料金体系' }
+                    </div>
                   </div>
                   <button
                       onClick={() => {
@@ -719,7 +761,7 @@ export default function MovieDetailPage({
                   const newShowing = {
                     startTime: new Date().toISOString(),
                     screenId: screens.length > 0 ? screens[0].id : '',
-                    price: 1800
+                    uniformPrice: null
                   };
                   setEditedMovie(prev => prev ? {
                     ...prev,

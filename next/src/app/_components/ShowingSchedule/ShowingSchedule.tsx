@@ -26,7 +26,7 @@ type Showing = {
   id: string;
   startTime: Date;
   endTime: Date;
-  price: number;
+  uniformPrice: number;
   screen: Screen;
 };
 
@@ -125,7 +125,13 @@ export default function ShowingSchedule({ showings }: ShowingScheduleProps) {
                         {showing.screen.size === 'SMALL' && '小スクリーン'}
                       </div>
                       <div className="text-xl font-bold text-red-500">
-                        <span>¥{showing.price.toLocaleString()}</span>
+                        <span>
+                          {showing.uniformPrice ? (
+                              `¥${showing.uniformPrice.toLocaleString()}`
+                          ) : (
+                              '通常料金'
+                          )}
+                        </span>
                       </div>
                     </Link>
                   ))}

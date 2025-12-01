@@ -84,7 +84,7 @@ async function main() {
     data: {
       startTime,
       endTime,
-      price: 1800,
+      uniformPrice: null,
       screenId: screenOne.id,
       movieId: samplemovie.id,
     },

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { router } from "next/client";
 
 export type Movie = {
   id: string;
@@ -125,9 +126,18 @@ export default function MovieFilter({ Movies }: MovieFilterProps) {
                 <div className="flex justify-center mt-5">
                   {movie.releaseDate < new Date().toISOString() ? (
                     movie.showingCount > 0 ? (
-                      <a href="#" className="reservation-button bg-red-500 text-white border-none px-10 py-5 w-96 max-w-[90%] text-center cursor-pointer font-bold text-xl inline-block no-underline rounded-lg transition-colors hover:bg-red-600">
+                      // <a href="#" className="reservation-button bg-red-500 text-white border-none px-10 py-5 w-96 max-w-[90%] text-center cursor-pointer font-bold text-xl inline-block no-underline rounded-lg transition-colors hover:bg-red-600">
+                      //   予約
+                      // </a>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          router.push('');
+                        }}
+                        className="reservation-button bg-red-500 text-white border-none px-10 py-5 w-96 max-w-[90%] text-center cursor-pointer font-bold text-xl inline-block no-underline rounded-lg transition-colors hover:bg-red-600"
+                      >
                         予約
-                      </a>
+                      </button>
                     ) : (
                       <span className="reservation-button inactive bg-gray-300 text-white border-none px-10 py-5 w-96 max-w-[90%] text-center cursor-not-allowed font-bold text-xl inline-block no-underline rounded-lg">
                         上映予定
