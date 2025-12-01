@@ -33,7 +33,7 @@ interface Screen {
 }
 
 export default function MovieDetailPage({
-  params: paramsPromise
+  params: paramsPromise,
 }: {
   params: Promise<{ id: string }>;
 }) {
@@ -49,6 +49,7 @@ export default function MovieDetailPage({
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [screens, setScreens] = useState<Screen[]>([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // 画像アップロード関連の状態
   const [isUploading, setIsUploading] = useState(false);
@@ -82,7 +83,7 @@ export default function MovieDetailPage({
       try {
         setLoading(true);
         const response = await fetch(`/api/movies/${movieId}`, {
-          cache: 'no-store'
+          cache: 'no-store',
         });
 
         if (!response.ok) {
@@ -177,14 +178,13 @@ export default function MovieDetailPage({
 
       // プレビューと編集中のデータを更新
       setPreviewUrl(imageUrl);
-      setEditedMovie(prev => {
+      setEditedMovie((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
-          imageUrl: imageUrl
+          imageUrl: imageUrl,
         };
       });
-
     } catch (err) {
       console.error('アップロードエラー:', err);
       setUploadError(err instanceof Error ? err.message : 'ファイルのアップロードに失敗しました');
@@ -199,9 +199,13 @@ export default function MovieDetailPage({
     setOriginalImageUrl(movie?.imageUrl || null);
   };
 
-  const handleDeleteClick = async　() => {
-    if (!window.confirm(`「${movie?.title}」を削除してもよろしいですか？\nこの操作は取り消すことができません。`)) {
-        return
+  const handleDeleteClick = async () => {
+    if (
+      !window.confirm(
+        `「${movie?.title}」を削除してもよろしいですか？\nこの操作は取り消すことができません。`
+      )
+    ) {
+      return;
     }
 
     try {
@@ -214,7 +218,7 @@ export default function MovieDetailPage({
       if (!response.ok) {
         if (response.status === 400 && data.bookingCount) {
           throw new Error(
-              `この映画には${data.bookingCount}件の予約が存在するため削除できません。\n`
+            `この映画には${data.bookingCount}件の予約が存在するため削除できません。\n`
           );
         }
         throw new Error(data.error || '映画の削除に失敗しました');
@@ -222,12 +226,11 @@ export default function MovieDetailPage({
 
       alert('映画を削除しました。');
       router.push('/admin/movie');
-
     } catch (err) {
       console.error('映画情報削除エラー:', err);
       // エラーが発生してもアップロードは継続する
     }
-  }
+  };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
@@ -240,11 +243,11 @@ export default function MovieDetailPage({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setEditedMovie(prev => {
+    setEditedMovie((prev) => {
       if (!prev) return prev;
       return {
         ...prev,
-        [name]: value
+        [name]: value,
       };
     });
 
@@ -268,30 +271,40 @@ export default function MovieDetailPage({
     }
 
     setPreviewUrl(null);
-    setEditedMovie(prev => prev ? {...prev, imageUrl: ''} : prev);
+    setEditedMovie((prev) => (prev ? { ...prev, imageUrl: '' } : prev));
   };
 
-  const handleSaveClick = async () => {
+  // 確認モーダルを表示
+  const handleSaveClick = () => {
+    setShowConfirmModal(true);
+  };
+
+  // 実際の保存処理
+  const handleConfirmSave = async () => {
     if (!editedMovie) return;
 
     try {
       setIsSaving(true);
       setSaveError(null);
+      setShowConfirmModal(false);
 
       // 保存時に、元の画像と異なる場合は元の画像を削除
-      if (originalImageUrl &&
-          originalImageUrl !== editedMovie.imageUrl &&
-          editedMovie.imageUrl !== '') {
+      if (
+        originalImageUrl &&
+        originalImageUrl !== editedMovie.imageUrl &&
+        editedMovie.imageUrl !== ''
+      ) {
         await deleteExistingImage(originalImageUrl);
       }
 
       const movieData = {
         ...editedMovie,
-        showings: editedMovie.showings?.map(showing => ({
-          startTime: showing.startTime,
-          screenId: showing.screenId,
-          uniformPrice: showing.uniformPrice
-        })) || []
+        showings:
+          editedMovie.showings?.map((showing) => ({
+            startTime: showing.startTime,
+            screenId: showing.screenId,
+            uniformPrice: showing.uniformPrice,
+          })) || [],
       };
 
       const response = await fetch(`/admin/api/movies/${movieId}`, {
@@ -309,7 +322,9 @@ export default function MovieDetailPage({
         if (errorData.error?.includes('screen')) {
           throw new Error('スクリーン情報が見つかりません。管理者にお問い合わせください。');
         } else if (errorData.error?.includes('Foreign key')) {
-          throw new Error('データベースの関連性エラーが発生しました。管理者にお問い合わせください。');
+          throw new Error(
+            'データベースの関連性エラーが発生しました。管理者にお問い合わせください。'
+          );
         } else {
           throw new Error(errorData.error || '映画情報の更新に失敗しました');
         }
@@ -321,12 +336,180 @@ export default function MovieDetailPage({
       setOriginalImageUrl(updatedMovie.imageUrl); // 新しい画像URLを元のURLとして保存
       setIsEditing(false);
       setIsSaving(false);
-
     } catch (err) {
       console.error('映画更新エラー:', err);
-      setSaveError(err instanceof Error ? err.message : '映画情報の更新に失敗しました。もう一度お試しください。');
+      setSaveError(
+        err instanceof Error
+          ? err.message
+          : '映画情報の更新に失敗しました。もう一度お試しください。'
+      );
       setIsSaving(false);
     }
+  };
+
+  // 確認モーダルコンポーネント
+  const ConfirmModal = () => {
+    if (!showConfirmModal || !editedMovie) return null;
+
+    return (
+      <div className="fixed inset-0 bg-gray-300 bg-opacity-80 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-6 text-center">変更内容の確認</h2>
+
+            {/* 映画情報 */}
+            <div className="space-y-4 mb-6">
+              <div>
+                <h3 className="font-semibold text-gray-700 mb-2">タイトル</h3>
+                <p className="text-gray-900">{editedMovie.title}</p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <h3 className="font-semibold text-gray-700 mb-2">公開日</h3>
+                  <p className="text-gray-900">
+                    {new Date(editedMovie.releaseDate).toLocaleDateString('ja-JP')}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-700 mb-2">上映時間</h3>
+                  <p className="text-gray-900">{editedMovie.duration}分</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-700 mb-2">ジャンル</h3>
+                  <p className="text-gray-900">{editedMovie.genre}</p>
+                </div>
+              </div>
+
+              {previewUrl && (
+                <div>
+                  <h3 className="font-semibold text-gray-700 mb-2">映画ポスター画像</h3>
+                  <div className="w-32 h-44 border border-gray-300 rounded overflow-hidden">
+                    <Image
+                      src={previewUrl}
+                      alt="プレビュー"
+                      width={128}
+                      height={176}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {editedMovie.description && (
+                <div>
+                  <h3 className="font-semibold text-gray-700 mb-2">あらすじ</h3>
+                  <p className="text-gray-900 whitespace-pre-wrap">{editedMovie.description}</p>
+                </div>
+              )}
+
+              <div>
+                <h3 className="font-semibold text-gray-700 mb-2">監督</h3>
+                <p className="text-gray-900">{editedMovie.director}</p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-gray-700 mb-2">出演者</h3>
+                <p className="text-gray-900">{editedMovie.casts}</p>
+              </div>
+
+              {editedMovie.trailerUrl && (
+                <div>
+                  <h3 className="font-semibold text-gray-700 mb-2">予告編URL</h3>
+                  <p className="text-gray-900 break-all text-sm">{editedMovie.trailerUrl}</p>
+                </div>
+              )}
+            </div>
+
+            {/* 上映スケジュール */}
+            {editedMovie.showings && editedMovie.showings.length > 0 && (
+              <div className="border-t pt-4">
+                <h3 className="font-semibold text-gray-700 mb-3">上映スケジュール</h3>
+                <div className="space-y-2">
+                  {editedMovie.showings.map((showing, index) => {
+                    const screen = screens.find((s) => s.id === showing.screenId);
+                    const startTime = new Date(showing.startTime);
+
+                    return (
+                      <div key={index} className="bg-gray-50 p-3 rounded border border-gray-200">
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <span className="font-medium text-gray-600">スクリーン：</span>
+                            <span className="text-gray-900">
+                              {screen ? `${screen.cinema.name} - ${screen.number}` : '不明'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-600">料金：</span>
+                            <span className="text-gray-900">
+                              {showing.uniformPrice
+                                ? `一律 ${showing.uniformPrice.toLocaleString()}円`
+                                : 'デフォルト料金体系'}
+                            </span>
+                          </div>
+                          <div className="col-span-2">
+                            <span className="font-medium text-gray-600">開始：</span>
+                            <span className="text-gray-900">
+                              {startTime.toLocaleString('ja-JP')}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ボタン */}
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+              <button
+                type="button"
+                onClick={() => setShowConfirmModal(false)}
+                className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium"
+                disabled={isSaving}
+              >
+                キャンセル
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmSave}
+                disabled={isSaving}
+                className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium disabled:bg-green-300 flex items-center"
+              >
+                {isSaving ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    保存中...
+                  </>
+                ) : (
+                  '変更を保存'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (loading) return <div>読み込み中...</div>;
@@ -340,27 +523,36 @@ export default function MovieDetailPage({
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <Link href="/admin/movie" className="inline-flex items-center text-blue-600 hover:text-blue-800">
+          <Link
+            href="/admin/movie"
+            className="inline-flex items-center text-blue-600 hover:text-blue-800"
+          >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             映画一覧に戻る
           </Link>
 
-          <button
-            onClick={handleDeleteClick}
-            className="bg-red-400 hover:bg-red-600 text-white font-medium py-2 px-4 rounded"
-          >
-            削除する
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleDeleteClick}
+              className="bg-red-400 hover:bg-red-600 text-white font-medium py-2 px-4 rounded"
+            >
+              削除する
+            </button>
 
-          <button
-            onClick={handleEditClick}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
-          >
-            編集する
-          </button>
-
+            <button
+              onClick={handleEditClick}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
+            >
+              編集する
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col md:flex-row bg-white rounded-lg shadow-lg overflow-hidden">
@@ -386,7 +578,9 @@ export default function MovieDetailPage({
             <h1 className="text-3xl font-bold mb-2">{movie.title}</h1>
 
             <div className="flex flex-wrap text-sm text-gray-600 mb-4">
-              <span className="mr-4">{new Date(movie.releaseDate).toLocaleDateString('ja-JP')} 公開</span>
+              <span className="mr-4">
+                {new Date(movie.releaseDate).toLocaleDateString('ja-JP')} 公開
+              </span>
               <span className="mr-4">{movie.duration}分</span>
               <span>{movie.genre}</span>
             </div>
@@ -400,8 +594,12 @@ export default function MovieDetailPage({
 
             <div className="mb-6">
               <h2 className="text-lg font-semibold mb-2">スタッフ・キャスト</h2>
-              <p className="mb-1"><span className="font-medium">監督:</span> {movie.director}</p>
-              <p><span className="font-medium">出演:</span> {movie.casts}</p>
+              <p className="mb-1">
+                <span className="font-medium">監督:</span> {movie.director}
+              </p>
+              <p>
+                <span className="font-medium">出演:</span> {movie.casts}
+              </p>
             </div>
 
             {movie.trailerUrl && (
@@ -414,8 +612,18 @@ export default function MovieDetailPage({
                   className="inline-flex items-center text-blue-600 hover:text-blue-800"
                 >
                   予告編を見る
-                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  <svg
+                    className="w-4 h-4 ml-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
                   </svg>
                 </a>
               </div>
@@ -446,7 +654,12 @@ export default function MovieDetailPage({
           className="inline-flex items-center text-gray-600 hover:text-gray-800"
         >
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
           キャンセル
         </button>
@@ -455,12 +668,10 @@ export default function MovieDetailPage({
           onClick={handleSaveClick}
           disabled={isSaving}
           className={`${
-            isSaving 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-green-600 hover:bg-green-700'
+            isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
           } text-white font-medium py-2 px-4 rounded`}
         >
-          {isSaving ? '保存中...' : '変更を保存'}
+          変更内容を確認
         </button>
       </div>
 
@@ -473,86 +684,112 @@ export default function MovieDetailPage({
       <div className="bg-white rounded-lg shadow-lg overflow-hidden p-6">
         <div className="grid grid-cols-1 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              タイトル
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">タイトル</label>
             <input
-                type="text"
-                name="title"
-                value={editedMovie?.title || ''}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+              type="text"
+              name="title"
+              value={editedMovie?.title || ''}
+              onChange={handleInputChange}
+              className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                公開日
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">公開日</label>
               <input
-                  type="date"
-                  name="releaseDate"
-                  value={editedMovie?.releaseDate ? new Date(editedMovie.releaseDate).toISOString().split('T')[0] : ''}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                type="date"
+                name="releaseDate"
+                value={
+                  editedMovie?.releaseDate
+                    ? new Date(editedMovie.releaseDate).toISOString().split('T')[0]
+                    : ''
+                }
+                onChange={handleInputChange}
+                className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                上映時間（分）
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">上映時間（分）</label>
               <input
-                  type="number"
-                  name="duration"
-                  value={editedMovie?.duration || ''}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                type="number"
+                name="duration"
+                value={editedMovie?.duration || ''}
+                onChange={handleInputChange}
+                className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                ジャンル
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">ジャンル</label>
               <input
-                  type="text"
-                  name="genre"
-                  value={editedMovie?.genre || ''}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                type="text"
+                name="genre"
+                value={editedMovie?.genre || ''}
+                onChange={handleInputChange}
+                className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           </div>
 
           {/* 画像アップロード機能 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              映画ポスター画像
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">映画ポスター画像</label>
 
             <div className="space-y-4">
               {/* ファイルアップロード */}
               <div>
                 <div className="flex items-center justify-center w-full">
-                  <label htmlFor="image-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                  <label
+                    htmlFor="image-upload"
+                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+                  >
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       {isUploading ? (
                         <div className="flex items-center">
-                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          <svg
+                            className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
                           </svg>
                           <span className="text-sm text-blue-500">アップロード中...</span>
                         </div>
                       ) : (
                         <>
-                          <svg className="w-8 h-8 mb-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                          <svg
+                            className="w-8 h-8 mb-4 text-gray-500"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 20 16"
+                          >
+                            <path
+                              stroke="currentColor"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
+                            />
                           </svg>
                           <p className="mb-2 text-sm text-gray-500">
-                            <span className="font-semibold">クリックしてファイルを選択</span> またはドラッグ&ドロップ
+                            <span className="font-semibold">クリックしてファイルを選択</span>{' '}
+                            またはドラッグ&ドロップ
                           </p>
                           <p className="text-xs text-gray-500">PNG, JPG, GIF (最大5MB)</p>
                           {previewUrl && (
@@ -574,232 +811,234 @@ export default function MovieDetailPage({
                   </label>
                 </div>
 
-                {uploadError && (
-                  <div className="mt-2 text-sm text-red-600">
-                    {uploadError}
-                  </div>
-                )}
+                {uploadError && <div className="mt-2 text-sm text-red-600">{uploadError}</div>}
               </div>
 
               {/* URLでの直接入力 */}
               <div>
-                <label className="block text-xs text-gray-500 mb-1">
-                  または画像URLを直接入力
-                </label>
+                <label className="block text-xs text-gray-500 mb-1">または画像URLを直接入力</label>
                 <input
-                    type="text"
-                    name="imageUrl"
-                    value={editedMovie?.imageUrl || ''}
-                    onChange={handleInputChange}
-                    placeholder="https://example.com/image.jpg"
-                    className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                  type="text"
+                  name="imageUrl"
+                  value={editedMovie?.imageUrl || ''}
+                  onChange={handleInputChange}
+                  placeholder="https://example.com/image.jpg"
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
             </div>
 
             {/* 画像プレビュー */}
             {previewUrl && (
-                <div className="mt-4">
-                  <div className="relative w-32 h-48 border border-gray-200 rounded overflow-hidden">
-                    <Image
-                        src={previewUrl}
-                        alt="映画ポスタープレビュー"
-                        fill
-                        className="object-cover"
-                        onError={() => {
-                          setPreviewUrl(null);
-                          setUploadError('画像の読み込みに失敗しました');
-                        }}
-                    />
-                  </div>
-                  <button
-                    onClick={handleImageDelete}
-                    className="mt-2 text-sm text-red-600 hover:text-red-800"
-                  >
-                    画像を削除
-                  </button>
+              <div className="mt-4">
+                <div className="relative w-32 h-48 border border-gray-200 rounded overflow-hidden">
+                  <Image
+                    src={previewUrl}
+                    alt="映画ポスタープレビュー"
+                    fill
+                    className="object-cover"
+                    onError={() => {
+                      setPreviewUrl(null);
+                      setUploadError('画像の読み込みに失敗しました');
+                    }}
+                  />
                 </div>
+                <button
+                  onClick={handleImageDelete}
+                  className="mt-2 text-sm text-red-600 hover:text-red-800"
+                >
+                  画像を削除
+                </button>
+              </div>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              あらすじ
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">あらすじ</label>
             <textarea
-                name="description"
-                value={editedMovie?.description || ''}
-                onChange={handleInputChange}
-                rows={4}
-                className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+              name="description"
+              value={editedMovie?.description || ''}
+              onChange={handleInputChange}
+              rows={4}
+              className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              監督
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">監督</label>
             <input
-                type="text"
-                name="director"
-                value={editedMovie?.director || ''}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+              type="text"
+              name="director"
+              value={editedMovie?.director || ''}
+              onChange={handleInputChange}
+              className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              出演者
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">出演者</label>
             <input
-                type="text"
-                name="casts"
-                value={editedMovie?.casts || ''}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+              type="text"
+              name="casts"
+              value={editedMovie?.casts || ''}
+              onChange={handleInputChange}
+              className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              予告編URL
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">予告編URL</label>
             <input
-                type="text"
-                name="trailerUrl"
-                value={editedMovie?.trailerUrl || ''}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+              type="text"
+              name="trailerUrl"
+              value={editedMovie?.trailerUrl || ''}
+              onChange={handleInputChange}
+              className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              上映スケジュール
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">上映スケジュール</label>
 
             {editedMovie?.showings?.map((showing, index) => (
-                <div key={index} className="flex items-center gap-2 mb-2 p-3 border border-gray-200 rounded">
-                  <div className="flex-1">
-                    <label className="block text-xs text-gray-500 mb-1">上映時間</label>
-                    <input
-                        type="datetime-local"
-                        value={new Date(showing.startTime).toISOString().slice(0, 16)}
-                        onChange={(e) => {
-                          const updated = [...(editedMovie.showings || [])];
-                          updated[index] = {
-                            ...updated[index],
-                            startTime: new Date(e.target.value).toISOString()
-                          };
-                          setEditedMovie(prev => prev ? {...prev, showings: updated} : prev);
-                        }}
-                        className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div className="w-48">
-                    <label className="block text-xs text-gray-500 mb-1">スクリーン</label>
-                    <select
-                        value={showing.screenId || ''}
-                        onChange={(e) => {
-                          const updated = [...(editedMovie.showings || [])];
-                          updated[index] = {
-                            ...updated[index],
-                            screenId: e.target.value
-                          };
-                          setEditedMovie(prev => prev ? {...prev, showings: updated} : prev);
-                        }}
-                        className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">スクリーンを選択</option>
-                      {screens.map((screen) => (
-                        <option key={screen.id} value={screen.id}>
-                          {screen.cinema.name} - {screen.number}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="w-24">
-                    <label className="block text-xs text-gray-500 mb-1">料金（円）</label>
-                    <input
-                        type="number"
-                        value={showing.uniformPrice || ''}
-                        onChange={(e) => {
-                          const updated = [...(editedMovie.showings || [])];
-                          updated[index] = {
-                            ...updated[index],
-                            uniformPrice: e.target.value === '' ? null : parseInt(e.target.value) || null
-                          };
-                          setEditedMovie(prev => prev ? {...prev, showings: updated} : prev);
-                        }}
-                        placeholder="空間可"
-                        className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <div className="text-xs text-gray-400 mt-1">
-                      { showing.uniformPrice ? `一律${showing.uniformPrice}円` : 'デフォルト料金体系' }
-                    </div>
-                  </div>
-                  <button
-                      onClick={() => {
-                        const updated = editedMovie.showings?.filter((_, i) => i !== index) || [];
-                        setEditedMovie(prev => prev ? {...prev, showings: updated} : prev);
-                      }}
-                      className="text-red-500 hover:text-red-700 p-2"
-                      title="削除"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+              <div
+                key={index}
+                className="flex items-center gap-2 mb-2 p-3 border border-gray-200 rounded"
+              >
+                <div className="flex-1">
+                  <label className="block text-xs text-gray-500 mb-1">上映時間</label>
+                  <input
+                    type="datetime-local"
+                    value={new Date(showing.startTime).toISOString().slice(0, 16)}
+                    onChange={(e) => {
+                      const updated = [...(editedMovie.showings || [])];
+                      updated[index] = {
+                        ...updated[index],
+                        startTime: new Date(e.target.value).toISOString(),
+                      };
+                      setEditedMovie((prev) => (prev ? { ...prev, showings: updated } : prev));
+                    }}
+                    className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                  />
                 </div>
+
+                <div className="w-48">
+                  <label className="block text-xs text-gray-500 mb-1">スクリーン</label>
+                  <select
+                    value={showing.screenId || ''}
+                    onChange={(e) => {
+                      const updated = [...(editedMovie.showings || [])];
+                      updated[index] = {
+                        ...updated[index],
+                        screenId: e.target.value,
+                      };
+                      setEditedMovie((prev) => (prev ? { ...prev, showings: updated } : prev));
+                    }}
+                    className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">スクリーンを選択</option>
+                    {screens.map((screen) => (
+                      <option key={screen.id} value={screen.id}>
+                        {screen.cinema.name} - {screen.number}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="w-24">
+                  <label className="block text-xs text-gray-500 mb-1">料金（円）</label>
+                  <input
+                    type="number"
+                    value={showing.uniformPrice || ''}
+                    onChange={(e) => {
+                      const updated = [...(editedMovie.showings || [])];
+                      updated[index] = {
+                        ...updated[index],
+                        uniformPrice:
+                          e.target.value === '' ? null : parseInt(e.target.value) || null,
+                      };
+                      setEditedMovie((prev) => (prev ? { ...prev, showings: updated } : prev));
+                    }}
+                    placeholder="空欄可"
+                    className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <div className="text-xs text-gray-400 mt-1">
+                    {showing.uniformPrice ? `一律${showing.uniformPrice}円` : 'デフォルト料金体系'}
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    const updated = editedMovie.showings?.filter((_, i) => i !== index) || [];
+                    setEditedMovie((prev) => (prev ? { ...prev, showings: updated } : prev));
+                  }}
+                  className="text-red-500 hover:text-red-700 p-2"
+                  title="削除"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              </div>
             ))}
 
             <button
-                onClick={() => {
-                  const newShowing = {
-                    startTime: new Date().toISOString(),
-                    screenId: screens.length > 0 ? screens[0].id : '',
-                    uniformPrice: null
-                  };
-                  setEditedMovie(prev => prev ? {
-                    ...prev,
-                    showings: [...(prev.showings || []), newShowing]
-                  } : prev);
-                }}
-                className="mt-2 text-blue-600 hover:text-blue-800 text-sm flex items-center"
+              onClick={() => {
+                const newShowing = {
+                  startTime: new Date().toISOString(),
+                  screenId: screens.length > 0 ? screens[0].id : '',
+                  uniformPrice: null,
+                };
+                setEditedMovie((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        showings: [...(prev.showings || []), newShowing],
+                      }
+                    : prev
+                );
+              }}
+              className="mt-2 text-blue-600 hover:text-blue-800 text-sm flex items-center"
             >
               <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
               </svg>
               スケジュールを追加
             </button>
           </div>
-
         </div>
       </div>
 
       <div className="mt-8 flex justify-end">
         <button
-            onClick={handleCancelEdit}
-            className="mr-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded"
+          onClick={handleCancelEdit}
+          className="mr-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded"
         >
           キャンセル
         </button>
 
         <button
-            onClick={handleSaveClick}
-            disabled={isSaving}
-            className={`${
-                isSaving
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-green-600 hover:bg-green-700'
-            } text-white font-medium py-2 px-4 rounded`}
+          onClick={handleSaveClick}
+          disabled={isSaving}
+          className={`${
+            isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
+          } text-white font-medium py-2 px-4 rounded`}
         >
-          {isSaving ? '保存中...' : '変更を保存'}
+          変更内容を確認
         </button>
       </div>
+
+      {/* 確認モーダル */}
+      <ConfirmModal />
     </div>
   );
 }
