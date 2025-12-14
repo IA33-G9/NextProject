@@ -23,7 +23,7 @@ export type Movie = {
 };
 
 export default function MovieDetailPage({
-  params: paramsPromise
+  params: paramsPromise,
 }: {
   params: Promise<{ id: string }>;
 }) {
@@ -40,7 +40,7 @@ export default function MovieDetailPage({
       try {
         setLoading(true);
         const response = await fetch(`/api/movies/${movieId}`, {
-          cache: 'no-store'
+          cache: 'no-store',
         });
 
         if (!response.ok) {
@@ -65,33 +65,32 @@ export default function MovieDetailPage({
     fetchMovie();
   }, [movieId, router]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-    <div className="text-xl">読み込み中...</div>
-  </div>;
-  
-  if (error) return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-    <div className="text-xl text-red-500">{error}</div>
-  </div>;
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+        <div className="text-xl">読み込み中...</div>
+      </div>
+    );
 
-  if (!movie) return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-    <div className="text-xl">映画情報が見つかりません</div>
-  </div>;
+  if (error)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+        <div className="text-xl text-red-500">{error}</div>
+      </div>
+    );
+
+  if (!movie)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+        <div className="text-xl">映画情報が見つかりません</div>
+      </div>
+    );
 
   const hasShowings = movie.showings && movie.showings.length > 0;
 
   return (
     <div className="bg-gray-900 text-white min-h-screen p-4 md:p-0">
       <div className="container mx-auto max-w-7xl bg-gray-800 shadow-xl rounded-lg overflow-hidden">
-        {/* Header */}
-        <div className="header bg-white p-4 text-center border-b-2 border-black relative">
-          <Link href="/movie" className="back-button absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-gray-800 px-4 py-2 font-bold text-sm md:text-base no-underline transition-colors hover:text-blue-600">
-            ＜ 映画一覧に戻る
-          </Link>
-          <div className="logo text-2xl md:text-3xl font-bold text-black font-luckiest-guy">
-            HAL CINEMAS
-          </div>
-        </div>
-
         {/* Movie Details */}
         <div className="movie-details p-4 md:p-8">
           <div className="content-section flex flex-col md:flex-row gap-8 items-start">
@@ -114,7 +113,8 @@ export default function MovieDetailPage({
             <div className="info-section flex-grow">
               <h1 className="detail-title text-3xl md:text-4xl font-bold mb-4">{movie.title}</h1>
               <p className="detail-rating text-red-500 text-lg md:text-xl mb-4">
-                {new Date(movie.releaseDate).toLocaleDateString('ja-JP')} 公開 ・ {movie.duration}分 ・ {movie.genre}
+                {new Date(movie.releaseDate).toLocaleDateString('ja-JP')} 公開 ・ {movie.duration}分
+                ・ {movie.genre}
               </p>
 
               {movie.description && (
@@ -126,8 +126,12 @@ export default function MovieDetailPage({
 
               <div className="text-gray-300 text-base md:text-lg mb-6">
                 <h2 className="text-xl font-semibold text-white mb-2">スタッフ・キャスト</h2>
-                <p><span className="font-semibold">監督:</span> {movie.director}</p>
-                <p><span className="font-semibold">出演:</span> {movie.casts}</p>
+                <p>
+                  <span className="font-semibold">監督:</span> {movie.director}
+                </p>
+                <p>
+                  <span className="font-semibold">出演:</span> {movie.casts}
+                </p>
               </div>
 
               {movie.trailerUrl && (

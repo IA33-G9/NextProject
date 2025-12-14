@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { router } from "next/client";
+import { router } from 'next/client';
 
 export type Movie = {
   id: string;
@@ -32,21 +32,16 @@ export default function MovieFilter({ Movies }: MovieFilterProps) {
     if (filter === 'all') {
       setFilteredMovies(Movies);
     } else if (filter === 'showing') {
-      setFilteredMovies(Movies.filter(movie => movie.releaseDate < new Date().toISOString() && movie.showingCount > 0));
+      setFilteredMovies(
+        Movies.filter(
+          (movie) => movie.releaseDate < new Date().toISOString() && movie.showingCount > 0
+        )
+      );
     }
   }, [filter, Movies]);
 
   return (
     <div className="container mx-auto max-w-7xl bg-white shadow-lg border border-gray-300">
-      <div className="header bg-white p-2 text-center border-b-2 border-black relative">
-        <Link href="/" className="top-button absolute left-5 top-1/2 -translate-y-1/2 bg-red-500 text-white border-none px-4 py-2 rounded-md font-bold text-sm no-underline transition-colors hover:bg-red-600">
-          TOPに戻る
-        </Link>
-        <div className="logo text-2xl font-bold text-black font-luckiest-guy">
-          HAL CINEMAS
-        </div>
-      </div>
-
       <div className="tab-container flex w-full">
         <button
           onClick={() => setFilter('all')}
@@ -115,9 +110,7 @@ export default function MovieFilter({ Movies }: MovieFilterProps) {
                 )}
               </div>
               <div>
-                <h2 className="movie-title font-bold mb-4 text-3xl text-gray-800">
-                  {movie.title}
-                </h2>
+                <h2 className="movie-title font-bold mb-4 text-3xl text-gray-800">{movie.title}</h2>
                 <p className="movie-rating text-red-500 mb-5 text-2xl">
                   {new Date(movie.releaseDate).toLocaleDateString('ja-JP')} 公開
                   {' • '} {movie.duration}分

@@ -14,18 +14,17 @@ type Showing = {
   screenId: string;
   screenSize: ScreenSize;
   movieId: string;
-    movie: {
-      title: string;
-      duration: string;
-      releaseDate: string;
+  movie: {
+    title: string;
+    duration: string;
+    releaseDate: string;
+  };
+  screen: {
+    number: string;
+    cinema: {
+      name: string;
     };
-    screen: {
-      number: string;
-      cinema: {
-        name: string;
-      };
-    };
-
+  };
 };
 
 interface BookingDetails {
@@ -54,26 +53,25 @@ interface CreditCardForm {
 type TicketType = 'GENERAL' | 'STUDENT' | 'YOUTH' | 'CHILD';
 
 type SeatWithTicket = {
-    seatId: string;
-    seatNumber: string;
-    ticketType: TicketType;
+  seatId: string;
+  seatNumber: string;
+  ticketType: TicketType;
 };
 
 const TICKET_TYPES = {
-    GENERAL: { label: '一般', price: 1800 },
-    STUDENT: { label: '大学生等', price: 1600 },
-    YOUTH: { label: '中学・高校生', price: 1400 },
-    CHILD: { label: '小学生・幼児', price: 1000 }
+  GENERAL: { label: '一般', price: 1800 },
+  STUDENT: { label: '大学生等', price: 1600 },
+  YOUTH: { label: '中学・高校生', price: 1400 },
+  CHILD: { label: '小学生・幼児', price: 1000 },
 } as const;
 
 type PaymentMethod = 'CREDIT_CARD' | 'CASH' | 'MOBILE_PAYMENT';
 
 const PAYMENT_METHODS = {
-    CREDIT_CARD: { label: 'クレジットカード'},
-    CASH: { label: '現金'},
-    MOBILE_PAYMENT: { label: 'モバイル決済'},
-}
-
+  CREDIT_CARD: { label: 'クレジットカード' },
+  CASH: { label: '現金' },
+  MOBILE_PAYMENT: { label: 'モバイル決済' },
+};
 
 export default function BookingConfirmPage() {
   const searchParams = useSearchParams();
@@ -94,7 +92,7 @@ export default function BookingConfirmPage() {
     cardNumber: '',
     expiryDate: '',
     cvv: '',
-    cardHolderName: ''
+    cardHolderName: '',
   });
   const [processing, setProcessing] = useState(false);
   const [loadingSeats, setLoadingSeats] = useState(true);
@@ -164,10 +162,10 @@ export default function BookingConfirmPage() {
         setSeatsInfo(data);
 
         // 座席にデフォルトのチケットタイプ（一般）を設定
-        const initialSeatTickets = data.map(seat => ({
+        const initialSeatTickets = data.map((seat) => ({
           seatId: seat.id,
           seatNumber: seat.seatNumber,
-          ticketType: 'GENERAL' as TicketType
+          ticketType: 'GENERAL' as TicketType,
         }));
         setSeatTickets(initialSeatTickets);
 
@@ -182,13 +180,11 @@ export default function BookingConfirmPage() {
     fetchSeats();
   }, [booking]);
 
-
-
   // クレジットカード番号のフォーマット（4桁区切り）
   const formatCardNumber = (value: string) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
     const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
+    const match = (matches && matches[0]) || '';
     const parts = [];
     for (let i = 0, len = match.length; i < len; i += 4) {
       parts.push(match.substring(i, i + 4));
@@ -232,9 +228,9 @@ export default function BookingConfirmPage() {
         break;
     }
 
-    setCreditCardForm(prev => ({
+    setCreditCardForm((prev) => ({
       ...prev,
-      [field]: formattedValue
+      [field]: formattedValue,
     }));
   };
 
@@ -261,40 +257,36 @@ export default function BookingConfirmPage() {
   };
 
   const handleTicketTypeChange = (seatId: string, ticketType: TicketType) => {
-    setSeatTickets(prev =>
-      prev.map(seat =>
-        seat.seatId === seatId
-          ? { ...seat, ticketType }
-          : seat
-      )
+    setSeatTickets((prev) =>
+      prev.map((seat) => (seat.seatId === seatId ? { ...seat, ticketType } : seat))
     );
   };
 
   const handleConfirmBooking = async () => {
-      try {
-          const bookingData = {
-              showingId,
-              seatIds,
-              paymentMethod: selectedPaymentMethod,
-              // デフォルト料金体系の場合は座席ごとのチケットタイプも送信
-              seatTickets: showing?.uniformPrice === null ? seatTickets : undefined
-          };
+    try {
+      const bookingData = {
+        showingId,
+        seatIds,
+        paymentMethod: selectedPaymentMethod,
+        // デフォルト料金体系の場合は座席ごとのチケットタイプも送信
+        seatTickets: showing?.uniformPrice === null ? seatTickets : undefined,
+      };
 
-          const response = await fetch(`/api/bookings`, {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify(bookingData),
-          });
+      const response = await fetch(`/api/bookings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bookingData),
+      });
 
-          if (!response.ok) throw new Error('予約に失敗');
+      if (!response.ok) throw new Error('予約に失敗');
 
-          const data = await response.json();
-          alert('予約が完了しました');
-          router.push(`/booking/completed/${data.bookingId}`);
-      } catch (err) {
-          console.error(err);
-          alert('予約に失敗しました');
-      }
+      const data = await response.json();
+      alert('予約が完了しました');
+      router.push(`/booking/completed/${data.bookingId}`);
+    } catch (err) {
+      console.error(err);
+      alert('予約に失敗しました');
+    }
   };
 
   if (loadingShowing || loadingBooking) {
@@ -309,7 +301,7 @@ export default function BookingConfirmPage() {
   const startTime = booking?.startTime || showing?.startTime || '';
   const seats = booking?.seats.length ? booking.seats : seatIds;
 
-    // 料金計算
+  // 料金計算
   const calculateTotalPrice = () => {
     if (booking?.totalPrice) return booking.totalPrice;
 
@@ -334,28 +326,26 @@ export default function BookingConfirmPage() {
     minute: '2-digit',
   });
 
-  const seatNumbers = (booking?.seats || seatsInfo.map(s => s.seatNumber)).join(', ');
+  const seatNumbers = (booking?.seats || seatsInfo.map((s) => s.seatNumber)).join(', ');
 
   return (
     <div className="container">
-      <div className="header">
-        <div className="logo">HAL CINEMAS</div>
-      </div>
-
-      <div className="back-button-container">
-        <button className="back-button" onClick={() => router.back()}>
-          <span className="arrow">←</span>
-          戻る
-        </button>
-      </div>
-
       <div className="main">
         <h2>予約確認</h2>
 
         <div className="summary">
-          <div><span>映画タイトル</span><span>{movieTitle}</span></div>
-          <div><span>上映日時</span><span>{formattedDate}</span></div>
-          <div><span>スクリーン</span><span>{screenName}</span></div>
+          <div>
+            <span>映画タイトル</span>
+            <span>{movieTitle}</span>
+          </div>
+          <div>
+            <span>上映日時</span>
+            <span>{formattedDate}</span>
+          </div>
+          <div>
+            <span>スクリーン</span>
+            <span>{screenName}</span>
+          </div>
         </div>
 
         <label htmlFor="seat">選択した席</label>
@@ -375,7 +365,9 @@ export default function BookingConfirmPage() {
                   </div>
                   <select
                     value={seatTicket.ticketType}
-                    onChange={(e) => handleTicketTypeChange(seatTicket.seatId, e.target.value as TicketType)}
+                    onChange={(e) =>
+                      handleTicketTypeChange(seatTicket.seatId, e.target.value as TicketType)
+                    }
                     className="ticket-select"
                   >
                     {Object.entries(TICKET_TYPES).map(([key, type]) => (
@@ -417,7 +409,7 @@ export default function BookingConfirmPage() {
             {/* クレジットカード情報入力フォーム */}
             {selectedPaymentMethod === 'CREDIT_CARD' && (
               <div className="credit-card-form">
-              <h4>クレジットカード情報を入力してください</h4>
+                <h4>クレジットカード情報を入力してください</h4>
 
                 <div className="card-form-grid">
                   <div className="form-group full-width">
@@ -475,7 +467,6 @@ export default function BookingConfirmPage() {
                     />
                   </div>
                 </div>
-
               </div>
             )}
 
@@ -501,419 +492,420 @@ export default function BookingConfirmPage() {
                 </ul>
               </div>
             )}
-
           </div>
         )}
 
-        <button className="confirm-btn" onClick={handleConfirmBooking}>確定</button>
+        <button className="confirm-btn" onClick={handleConfirmBooking}>
+          確定
+        </button>
       </div>
 
-    <style jsx>
-      {`
-        body {
-          font-family: Arial, sans-serif;
-          margin: 0;
-          padding: 0;
-          background-color: #f5f5f5;
-        }
-        .container {
-        max-width: 1920px;
-          width: 100%;
-          margin: 0 auto;
-          background-color: white;
-          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        @media (max-width: 1920px) {
+      <style jsx>
+        {`
+          body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+          }
           .container {
-            max-width: 1536px;
-          }
-        }
-        .header {
-          padding: 10px 20px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          border-bottom: 4px solid black;
-        }
-        .logo {
-          font-size: 28px;
-          color: #000;
-          font-family: 'Luckiest Guy', cursive;
-        }
-
-        .back-button-container {
-          padding: 20px 0;
-          border-bottom: 1px solid #ddd;
-          position: relative;
-        }
-
-        .back-button {
-          position: absolute;
-          left: 20px;
-          top: 50%;
-          transform: translateY(-50%);
-          background-color: #6c757d;
-          color: white;
-          border: none;
-          border-radius: 6px;
-          padding: 8px 16px;
-          font-size: 14px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          transition: background-color 0.2s ease;
-        }
-
-        .back-button:hover {
-          background-color: #5a6268;
-        }
-
-        .arrow {
-          font-size: 12px;
-        }
-
-        .main {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: start;
-          padding: 30px 20px;
-        }
-
-        h2 {
-          font-size: 32px;
-          margin-bottom: 30px;
-        }
-
-        .summary {
-          border-top: 1px solid #ccc;
-          border-bottom: 1px solid #ccc;
-          padding: 20px 0;
-          width: 400px;
-          font-size: 20px;
-          margin-bottom: 30px;
-        }
-
-        .summary div {
-          display: flex;
-          justify-content: space-between;
-          margin: 10px 0;
-        }
-
-        label {
-          display: block;
-          margin-bottom: 5px;
-          font-size: 14px;
-        }
-
-        .selected-seats-display {
-          width: 300px;
-          padding: 10px;
-          font-size: 16px;
-          margin-bottom: 20px;
-          border: 1px solid #ccc;
-          border-radius: 4px;
-          text-align: center;
-        }
-
-        .ticket-selection {
-          width: 500px;
-          margin: 20px 0;
-          padding: 20px;
-          border: 2px solid #007bff;
-          border-radius: 8px;
-          background-color: #f8f9fa;
-        }
-
-        .ticket-selection h3 {
-          margin: 0 0 15px 0;
-          font-size: 18px;
-          color: #333;
-          text-align: center;
-        }
-
-        .seat-ticket-list {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-
-        .seat-ticket-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 10px;
-          background-color: white;
-          border-radius: 4px;
-          border: 1px solid #ddd;
-        }
-
-        .seat-info {
-          font-size: 16px;
-          min-width: 60px;
-        }
-
-        .ticket-select {
-          padding: 8px 12px;
-          border: 1px solid #ccc;
-          border-radius: 4px;
-          font-size: 14px;
-          min-width: 200px;
-        }
-
-        .price-breakdown {
-          width: 400px;
-          margin: 20px 0;
-          padding: 15px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          background-color: #f9f9f9;
-        }
-
-        .price-breakdown h4 {
-          margin: 0 0 10px 0;
-          font-size: 16px;
-          text-align: center;
-        }
-
-        .breakdown-list {
-          display: flex;
-          flex-direction: column;
-          gap: 5px;
-        }
-
-        .breakdown-row {
-          display: flex;
-          justify-content: space-between;
-          padding: 5px 0;
-          font-size: 14px;
-        }
-
-        /* 支払方法選択のスタイル */
-        .payment-selection {
-          width: 500px;
-          margin: 20px 0;
-          padding: 20px;
-          border: 2px solid #28a745;
-          border-radius: 8px;
-          background-color: #f8fff9;
-        }
-
-        .payment-selection h3 {
-          margin: 0 0 15px 0;
-          font-size: 18px;
-          color: #333;
-          text-align: center;
-        }
-
-        .payment-methods {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-
-        .payment-method {
-          cursor: pointer;
-          display: block;
-        }
-
-        .payment-radio {
-          display: none;
-        }
-
-        .payment-card {
-          display: flex;
-          align-items: center;
-          gap: 15px;
-          padding: 15px 20px;
-          border: 2px solid #ddd;
-          border-radius: 8px;
-          background-color: white;
-          transition: all 0.3s ease;
-        }
-
-        .payment-method:hover .payment-card {
-          border-color: #28a745;
-          box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
-        }
-
-        .payment-radio:checked + .payment-card {
-          border-color: #28a745;
-          background-color: #f8fff9;
-          box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
-        }
-
-        .payment-label {
-          font-size: 16px;
-          font-weight: 500;
-          color: #333;
-        }
-
-        /* クレジットカードフォームのスタイル */
-        .credit-card-form {
-          margin-top: 20px;
-          padding: 20px;
-          background-color: #f8f9fa;
-          border: 2px solid #007bff;
-          border-radius: 8px;
-        }
-
-        .credit-card-form h4 {
-          margin: 0 0 20px 0;
-          font-size: 16px;
-          color: #333;
-          text-align: center;
-        }
-
-        .card-form-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 15px;
-          margin-bottom: 15px;
-        }
-
-        .form-group {
-          display: flex;
-          flex-direction: column;
-        }
-
-        .form-group.full-width {
-          grid-column: 1 / -1;
-        }
-
-        .form-label {
-          font-size: 14px;
-          font-weight: 500;
-          color: #333;
-          margin-bottom: 5px;
-        }
-
-        .required {
-          color: #dc3545;
-        }
-
-        .form-input {
-          padding: 10px 12px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          font-size: 14px;
-          transition: border-color 0.3s ease;
-        }
-
-        .form-input:focus {
-          outline: none;
-          border-color: #007bff;
-          box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-        }
-
-        .security-text strong {
-          display: block;
-          color: #1976d2;
-          font-size: 14px;
-          margin-bottom: 4px;
-        }
-
-        .security-text p {
-          margin: 0;
-          font-size: 13px;
-          color: #1976d2;
-          line-height: 1.4;
-        }
-
-        /* 支払方法情報のスタイル */
-        .payment-info {
-          margin-top: 20px;
-          padding: 20px;
-          border-radius: 8px;
-        }
-
-        .payment-info h4 {
-          margin: 0 0 15px 0;
-          font-size: 16px;
-          text-align: center;
-        }
-
-        .payment-info ul {
-          margin: 0;
-          padding-left: 20px;
-          line-height: 1.6;
-        }
-
-        .payment-info li {
-          margin-bottom: 8px;
-          font-size: 14px;
-        }
-
-        .cash-info {
-          background-color: #fff3cd;
-          border: 2px solid #ffc107;
-        }
-
-        .cash-info h4 {
-          color: #856404;
-        }
-
-        .mobile-info {
-          background-color: #d1ecf1;
-          border: 2px solid #17a2b8;
-        }
-
-        .mobile-info h4 {
-          color: #0c5460;
-        }
-
-        .price {
-          font-size: 32px;
-          font-weight: bold;
-          margin: 20px 0;
-          border-bottom: 1px solid #ccc;
-          padding-bottom: 10px;
-        }
-
-        .confirm-btn {
-          background-color: red;
-          color: white;
-          font-size: 20px;
-          padding: 15px 60px;
-          border: none;
-          border-radius: 30px;
-          cursor: pointer;
-          transition: opacity 0.2s ease;
-        }
-
-        .confirm-btn:hover {
-            opacity: 0.85;
-        }
-
-        @media (max-width: 768px) {
-          .summary {
-            width: 90%;
+            max-width: 1920px;
+            width: 100%;
+            margin: 0 auto;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
           }
 
-          .selected-seats-display {
-            width: 90%;
+          @media (max-width: 1920px) {
+            .container {
+              max-width: 1536px;
+            }
+          }
+          .header {
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 4px solid black;
+          }
+          .logo {
+            font-size: 28px;
+            color: #000;
+            font-family: 'Luckiest Guy', cursive;
           }
 
-          .ticket-selection {
-            width: 90%;
-          }
-
-          .price-breakdown {
-            width: 90%;
+          .back-button-container {
+            padding: 20px 0;
+            border-bottom: 1px solid #ddd;
+            position: relative;
           }
 
           .back-button {
-            position: static;
-            transform: none;
-            margin: 10px 20px;
-            align-self: flex-start;
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.2s ease;
           }
-        }
-      `}
-    </style>
+
+          .back-button:hover {
+            background-color: #5a6268;
+          }
+
+          .arrow {
+            font-size: 12px;
+          }
+
+          .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: start;
+            padding: 30px 20px;
+          }
+
+          h2 {
+            font-size: 32px;
+            margin-bottom: 30px;
+          }
+
+          .summary {
+            border-top: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
+            padding: 20px 0;
+            width: 400px;
+            font-size: 20px;
+            margin-bottom: 30px;
+          }
+
+          .summary div {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+          }
+
+          label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+          }
+
+          .selected-seats-display {
+            width: 300px;
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+          }
+
+          .ticket-selection {
+            width: 500px;
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+          }
+
+          .ticket-selection h3 {
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            color: #333;
+            text-align: center;
+          }
+
+          .seat-ticket-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+          }
+
+          .seat-ticket-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+          }
+
+          .seat-info {
+            font-size: 16px;
+            min-width: 60px;
+          }
+
+          .ticket-select {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            min-width: 200px;
+          }
+
+          .price-breakdown {
+            width: 400px;
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+          }
+
+          .price-breakdown h4 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            text-align: center;
+          }
+
+          .breakdown-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+          }
+
+          .breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 14px;
+          }
+
+          /* 支払方法選択のスタイル */
+          .payment-selection {
+            width: 500px;
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #28a745;
+            border-radius: 8px;
+            background-color: #f8fff9;
+          }
+
+          .payment-selection h3 {
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            color: #333;
+            text-align: center;
+          }
+
+          .payment-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+          }
+
+          .payment-method {
+            cursor: pointer;
+            display: block;
+          }
+
+          .payment-radio {
+            display: none;
+          }
+
+          .payment-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background-color: white;
+            transition: all 0.3s ease;
+          }
+
+          .payment-method:hover .payment-card {
+            border-color: #28a745;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+          }
+
+          .payment-radio:checked + .payment-card {
+            border-color: #28a745;
+            background-color: #f8fff9;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+          }
+
+          .payment-label {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+          }
+
+          /* クレジットカードフォームのスタイル */
+          .credit-card-form {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+          }
+
+          .credit-card-form h4 {
+            margin: 0 0 20px 0;
+            font-size: 16px;
+            color: #333;
+            text-align: center;
+          }
+
+          .card-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+          }
+
+          .form-group {
+            display: flex;
+            flex-direction: column;
+          }
+
+          .form-group.full-width {
+            grid-column: 1 / -1;
+          }
+
+          .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 5px;
+          }
+
+          .required {
+            color: #dc3545;
+          }
+
+          .form-input {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+          }
+
+          .form-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+          }
+
+          .security-text strong {
+            display: block;
+            color: #1976d2;
+            font-size: 14px;
+            margin-bottom: 4px;
+          }
+
+          .security-text p {
+            margin: 0;
+            font-size: 13px;
+            color: #1976d2;
+            line-height: 1.4;
+          }
+
+          /* 支払方法情報のスタイル */
+          .payment-info {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+          }
+
+          .payment-info h4 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            text-align: center;
+          }
+
+          .payment-info ul {
+            margin: 0;
+            padding-left: 20px;
+            line-height: 1.6;
+          }
+
+          .payment-info li {
+            margin-bottom: 8px;
+            font-size: 14px;
+          }
+
+          .cash-info {
+            background-color: #fff3cd;
+            border: 2px solid #ffc107;
+          }
+
+          .cash-info h4 {
+            color: #856404;
+          }
+
+          .mobile-info {
+            background-color: #d1ecf1;
+            border: 2px solid #17a2b8;
+          }
+
+          .mobile-info h4 {
+            color: #0c5460;
+          }
+
+          .price {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 20px 0;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+          }
+
+          .confirm-btn {
+            background-color: red;
+            color: white;
+            font-size: 20px;
+            padding: 15px 60px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+          }
+
+          .confirm-btn:hover {
+            opacity: 0.85;
+          }
+
+          @media (max-width: 768px) {
+            .summary {
+              width: 90%;
+            }
+
+            .selected-seats-display {
+              width: 90%;
+            }
+
+            .ticket-selection {
+              width: 90%;
+            }
+
+            .price-breakdown {
+              width: 90%;
+            }
+
+            .back-button {
+              position: static;
+              transform: none;
+              margin: 10px 20px;
+              align-self: flex-start;
+            }
+          }
+        `}
+      </style>
     </div>
   );
 }

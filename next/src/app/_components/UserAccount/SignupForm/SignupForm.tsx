@@ -65,7 +65,7 @@ export function SignupForm({ onSubmit }: SignupFormProps) {
   return (
     <form action={handleSubmit}>
       <FormField
-          label="Username"
+          label="ユーザー名"
           name="username"
           type="text"
           error={fieldErrors.username}
@@ -73,14 +73,14 @@ export function SignupForm({ onSubmit }: SignupFormProps) {
       />
 
       <FormField
-          label="Email"
+          label="メールアドレス"
           name="email"
           type="email"
           error={fieldErrors.email}
           onChange={handleInputChange}
       />
       <FormField
-          label="Password"
+          label="パスワード"
           name="password"
           type="password"
           error={fieldErrors.password}
@@ -88,17 +88,18 @@ export function SignupForm({ onSubmit }: SignupFormProps) {
       />
 
       <FormField
-          label="Confirm"
+          label="パスワード確認"
           name="password2"
           type="password"
           error={fieldErrors.password2}
           onChange={handleInputChange}
       />
 
-      {form.password}
-      {form.password2}
-      <button type="submit">
-        SignUp
+      <button
+        type="submit"
+        className="w-full mt-6 py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        新規登録
       </button>
     </form>
   );

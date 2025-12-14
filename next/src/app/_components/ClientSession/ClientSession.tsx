@@ -1,7 +1,7 @@
 'use client';
 import { useSession } from 'next-auth/react';
-import SignOut from "@/app/_components/UserAccount/SignOutForm/SignOut";
-import Link from "next/link";
+import SignOut from '@/app/_components/UserAccount/SignOutForm/SignOut';
+import Link from 'next/link';
 
 export default function ClientSession() {
   const { data: session } = useSession();
@@ -10,9 +10,10 @@ export default function ClientSession() {
     <div>
       {session ? (
         <div>
+          <Link href={`/movie`}>映画一覧</Link>
           <p>ログイン中: {session.user?.email}</p>
           <p>{session.user?.name}</p>
-          <SignOut/>
+          <SignOut />
         </div>
       ) : (
         <div>

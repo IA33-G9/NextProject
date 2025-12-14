@@ -29,7 +29,7 @@ export function SigninForm() {
             return;
             }
 
-            router.push('/');
+            router.push('/movie');
             router.refresh();
 
         } catch (err) {
@@ -50,10 +50,17 @@ export function SigninForm() {
                 type="password"
                 name="password"
             />
-            {error && <div>{error}</div>}
-            <div>
-                <button type="submit">ログイン</button>
-            </div>
+            {error && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-700 text-sm">{error}</p>
+                </div>
+            )}
+            <button
+                type="submit"
+                className="w-full mt-6 py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+                ログイン
+            </button>
         </form>
     );
 }
