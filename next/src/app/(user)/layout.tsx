@@ -14,6 +14,11 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
           <div className="text-2xl text-black font-['Luckiest_Guy',cursive]">HAL CINEMAS</div>
           {session && (
             <div className="absolute right-4 flex items-center space-x-4">
+              {session.user.isAdmin && (
+                <Link href="/admin" className="text-gray-600 hover:text-gray-900">
+                  管理者画面へ
+                </Link>
+              )}
               <Link href="/movie" className="text-gray-600 hover:text-gray-900">
                 映画一覧
               </Link>

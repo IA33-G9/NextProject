@@ -43,6 +43,7 @@ export const authOptions = {
           id: user.id.toString(),
           email: user.email,
           name: user.username,
+          isAdmin: user.isAdmin,
         };
       }
     })
@@ -63,6 +64,11 @@ export const authOptions = {
     async session({ session, token }: { session: Session; token: JWT }) {
       if (session.user) {
         session.user.id = token.id as string;
+        const user = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { isAdmin: true }
+        });
+        session.user.isAdmin = user?.isAdmin || false;
       }
       return session;
     }

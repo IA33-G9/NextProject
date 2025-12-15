@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
           data: {
             startTime,
             endTime,
-            price: showing.price,
+            uniformPrice: showing.uniformPrice || null,
             screenId: showing.screenId,
             movieId: movie.id,
           },
