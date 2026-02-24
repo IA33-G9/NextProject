@@ -10,7 +10,18 @@ export default function AdminDashboardPage() {
                 </div>
                 
                 <div className="flex flex-col gap-6">
-                    <Link 
+                    <Link
+                        href={`/admin/reservation`}
+                        className="bg-white hover:bg-gray-50 text-gray-800 font-semibold py-8 px-8 rounded-lg text-center transition-all shadow-md hover:shadow-lg border border-gray-200"
+                    >
+                        <div className="text-xl mb-2">店頭予約作成</div>
+                        <div className="text-sm text-gray-600 font-normal">
+                            来館した客の予約をその場で<br />
+                            作成することができます
+                        </div>
+                    </Link>
+
+                    <Link
                         href={`/admin/movie`}
                         className="bg-white hover:bg-gray-50 text-gray-800 font-semibold py-8 px-8 rounded-lg text-center transition-all shadow-md hover:shadow-lg border border-gray-200"
                     >
@@ -20,8 +31,8 @@ export default function AdminDashboardPage() {
                             各映画の編集・削除を行えます
                         </div>
                     </Link>
-                    
-                    <Link 
+
+                    <Link
                         href={`/admin/movie/add`}
                         className="bg-white hover:bg-gray-50 text-gray-800 font-semibold py-8 px-8 rounded-lg text-center transition-all shadow-md hover:shadow-lg border border-gray-200"
                     >
