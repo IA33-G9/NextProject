@@ -114,8 +114,9 @@ export default function AdminReservationTicketPage() {
     const seatTicketParams = seatTickets
       .map((st) => `${st.seatId}:${st.ticketType}`)
       .join(',');
+    const seatLabels = seatTickets.map((st) => st.seatNumber).join(',');
     router.push(
-      `/admin/reservation/confirm?showingId=${showingId}&seats=${seatIds.join(',')}&seatTickets=${seatTicketParams}`
+      `/admin/reservation/confirm?showingId=${showingId}&seats=${seatIds.join(',')}&seatLabels=${seatLabels}&seatTickets=${seatTicketParams}`
     );
   };
 
@@ -152,11 +153,12 @@ export default function AdminReservationTicketPage() {
     const seatTicketParams = seatIds
       .map((id) => `${id}:GENERAL`)
       .join(',');
+    const seatLabels = seatsInfo.map((seat) => seat.seatNumber).join(',');
 
     // ページマウント時に自動遷移
     if (typeof window !== 'undefined') {
       router.push(
-        `/admin/reservation/confirm?showingId=${showingId}&seats=${seatIds.join(',')}&seatTickets=${seatTicketParams}`
+        `/admin/reservation/confirm?showingId=${showingId}&seats=${seatIds.join(',')}&seatLabels=${seatLabels}&seatTickets=${seatTicketParams}`
       );
     }
 

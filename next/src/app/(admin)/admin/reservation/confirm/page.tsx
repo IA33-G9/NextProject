@@ -44,6 +44,7 @@ export default function AdminReservationConfirmPage() {
 
   const showingId = searchParams.get('showingId');
   const seatIds = searchParams.get('seats')?.split(',') || [];
+  const seatLabels = searchParams.get('seatLabels')?.split(',') || [];
   const seatTicketsParam = searchParams.get('seatTickets') || '';
 
   const seatTickets: SeatTicketPair[] = seatTicketsParam
@@ -173,7 +174,7 @@ export default function AdminReservationConfirmPage() {
                 <strong>スクリーン:</strong> {showing.screen.number}
               </p>
               <p>
-                <strong>座席:</strong> {seatIds.join(', ')}
+                <strong>座席:</strong> {seatLabels.length > 0 ? seatLabels.join(', ') : seatIds.join(', ')}
               </p>
             </div>
           </div>
@@ -183,11 +184,12 @@ export default function AdminReservationConfirmPage() {
             <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-6 mb-8">
               <h3 className="text-xl font-semibold mb-4">座席区分</h3>
               <div className="space-y-2">
-                {seatTickets.map((st) => {
+                {seatTickets.map((st, index) => {
                   const type = TICKET_TYPES[st.ticketType];
+                  const seatLabel = seatLabels[index] || st.seatId;
                   return (
                     <p key={st.seatId}>
-                      {st.seatId} - {type.label} (¥{type.price.toLocaleString()})
+                      {seatLabel} - {type.label} (¥{type.price.toLocaleString()})
                     </p>
                   );
                 })}

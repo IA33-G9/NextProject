@@ -139,7 +139,7 @@ export default function ReservationCompletePage() {
             </div>
             <div className="flex justify-between items-center px-5 py-3 text-sm">
               <span className="text-gray-500">座席：</span>
-              <span className="font-semibold text-gray-800">{booking.seats.join(' , ')}</span>
+              <span className="font-semibold text-gray-800">{booking.seatDetails.map(seat => seat.seatLabel).join(' , ')}</span>
             </div>
             <div className="flex justify-between items-center px-5 py-3 text-sm">
               <span className="text-gray-500">料金：</span>
